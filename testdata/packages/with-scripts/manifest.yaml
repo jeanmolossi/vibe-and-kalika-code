@@ -1,0 +1,17 @@
+name: with-scripts
+version: 0.1.0
+description: Package containing script files
+targets:
+  - copilot-cli
+agents:
+  - name: test-agent
+    source: agents/test-agent.md
+    targets:
+      copilot-cli:
+        scope: user
+skills:
+  - name: test-skill
+    source: skills/test-skill
+    targets:
+      copilot-cli:
+        scope: user

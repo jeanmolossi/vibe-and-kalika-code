@@ -1,0 +1,11 @@
+name: invalid-path
+version: 0.1.0
+description: Invalid package with path traversal
+targets:
+  - copilot-cli
+agents:
+  - name: evil-agent
+    source: ../../etc/passwd
+    targets:
+      copilot-cli:
+        scope: user

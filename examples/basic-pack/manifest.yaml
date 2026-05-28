@@ -1,0 +1,44 @@
+name: basic-kalika-pack
+version: 0.1.0
+description: Basic example pack for Vibe and Kalika Code.
+author: Jean Molossi
+
+targets:
+  - copilot-cli
+  - claude-code
+  - codex-cli
+
+agents:
+  - name: kalika-reviewer
+    description: Adversarial reviewer for code quality, security, performance and maintainability.
+    source: agents/kalika-reviewer.md
+    targets:
+      copilot-cli:
+        scope: user
+      claude-code:
+        scope: project
+      codex-cli:
+        mode: agents-md-section
+
+skills:
+  - name: code-review
+    description: Review code changes with strict quality gates.
+    source: skills/code-review
+    targets:
+      copilot-cli:
+        scope: user
+      claude-code:
+        scope: project
+      codex-cli:
+        scope: project
+
+  - name: idiomatic-go
+    description: Check Go code for idiomatic design and maintainability.
+    source: skills/idiomatic-go
+    targets:
+      copilot-cli:
+        scope: user
+      claude-code:
+        scope: project
+      codex-cli:
+        scope: project

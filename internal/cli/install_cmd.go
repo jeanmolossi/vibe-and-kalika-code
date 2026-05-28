@@ -1,0 +1,50 @@
+package cli
+
+import (
+	"fmt"
+	"os"
+	"strings"
+
+	"github.com/jeanmolossi/vibe-and-kalika-code/internal/app"
+	"github.com/jeanmolossi/vibe-and-kalika-code/internal/platform"
+	"github.com/spf13/cobra"
+)
+
+func newInstallCmd() *cobra.Command {
+	var yes, dryRun bool
+	var targetsCSV, conflictAction string
+	cmd := &cobra.Command{
+		Use:   "install <source>",
+		Short: "Install a package from a local dir or git URL",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			projectRoot, _ := os.Getwd()
+			res, code, err := app.Install(app.InstallOptions{Source: args[0], ProjectRoot: projectRoot, Targets: parseTargets(targetsCSV), Yes: yes, DryRun: dryRun, ConflictAction: conflictAction})
+			if err != nil {
+				return exitError(code, err)
+			}
+			fmt.Fprintf(cmd.OutOrStdout(), "Installed %s %s\n", res.Manifest.Name, res.Manifest.Version)
+			return nil
+		},
+	}
+	cmd.Flags().BoolVar(&yes, "yes", false, "Skip prompts")
+	cmd.Flags().BoolVar(&dryRun, "dry-run", false, "Show plan without applying")
+	cmd.Flags().StringVar(&targetsCSV, "targets", "", "Comma-separated targets")
+	cmd.Flags().StringVar(&conflictAction, "conflict-action", "skip", "skip|overwrite|backup-and-overwrite")
+	return cmd
+}
+
+func parseTargets(csv string) []platform.Platform {
+	if csv == "" {
+		return nil
+	}
+	parts := strings.Split(csv, ",")
+	out := make([]platform.Platform, 0, len(parts))
+	for _, p := range parts {
+		trimmed := strings.TrimSpace(p)
+		if trimmed != "" {
+			out = append(out, platform.Platform(trimmed))
+		}
+	}
+	return out
+}
