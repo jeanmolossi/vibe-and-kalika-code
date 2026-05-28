@@ -137,28 +137,29 @@ linters:
         - name: superfluous-else
         - name: unreachable-code
         - name: redefines-builtin-id
+  exclusions:
+    rules:
+      - path: '(.+)_test\.go'
+        linters:
+          - dupl
+          - funlen
+          - gochecknoinits
+          - mnd
+          - unparam
+          - lll
+          - noctx
+      - path: internal/integration/
+        linters:
+          - lll
+          - noctx
+          - unparam
+      - path: cmd/
+        linters:
+          - gochecknoinits
+    paths:
+      - testdata
+      - vendor
 
 issues:
-  exclude-rules:
-    - path: .*_test\.go
-      linters:
-        - dupl
-        - funlen
-        - gochecknoinits
-        - mnd
-        - unparam
-        - lll
-        - noctx
-    - path: internal/integration/
-      linters:
-        - lll
-        - noctx
-        - unparam
-    - path: cmd/
-      linters:
-        - gochecknoinits
-  exclude-dirs:
-    - testdata
-    - vendor
   max-issues-per-linter: 0
   max-same-issues: 0
