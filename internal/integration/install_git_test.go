@@ -27,7 +27,7 @@ func TestInstallGitPackage(t *testing.T) {
 		ProjectRoot:    projectRoot,
 		Targets:        []platform.Platform{platform.PlatformCopilotCLI},
 		Yes:            true,
-		ConflictAction: "backup-and-overwrite",
+		ConflictAction: conflictActionBackupOverwrite,
 	})
 	if err != nil || code != app.ExitSuccess {
 		t.Fatalf("Install() err=%v code=%d", err, code)
