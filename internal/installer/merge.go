@@ -72,7 +72,7 @@ func RemoveManagedBlock(targetPath, agentName, allowedRoot string) error {
 	// Ensure final newline
 	normalized = strings.TrimRight(normalized, "\n") + "\n"
 	if strings.TrimSpace(normalized) == "" {
-		return os.Remove(targetPath)
+		return os.Remove(targetPath) //#nosec G703 -- targetPath validated by EnsureResolvedWithinRoot above
 	}
-	return os.WriteFile(targetPath, []byte(normalized), 0o644) //#nosec G304,G306 -- targetPath validated above; 0o644 is intentional for team-readable config
+	return os.WriteFile(targetPath, []byte(normalized), 0o644) //#nosec G304,G306,G703 -- targetPath validated above; 0o644 is intentional for team-readable config
 }
