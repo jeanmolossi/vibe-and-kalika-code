@@ -1,0 +1,474 @@
+name: kalika-ofc
+version: 0.1.0
+description: Kalika orchestrator pack — agents and skills for multi-agent AI coding workflows
+author: Jean Molossi
+license: MIT
+
+targets:
+  - copilot-cli
+  - claude-code
+  - codex-cli
+
+agents:
+  - name: kalika-judge
+    description: Use this agent when the user wants an independent surprise council judgment, adversarial audit, or post-workflow evaluation of multi-agent performance.
+    source: agents/kalika-judge.agent.md
+    targets:
+      copilot-cli:
+        scope: user
+      claude-code:
+        scope: project
+      codex-cli:
+        mode: agents-md-section
+
+  - name: kalika-orchestrator
+    description: Meta-orchestrator for multi-agent software workflows. Use for refinement, spike, validation, and development workflows that require routing, delegation, gates, and coordination.
+    source: agents/kalika-orchestrator.agent.md
+    targets:
+      copilot-cli:
+        scope: user
+      claude-code:
+        scope: project
+      codex-cli:
+        mode: agents-md-section
+
+  - name: specialist-documenter
+    description: Documentation specialist. Use to create or update concise, accurate documentation from research, plans, implementation summaries, architecture decisions, or behavior changes.
+    source: agents/specialist-documenter.agent.md
+    targets:
+      copilot-cli:
+        scope: user
+      claude-code:
+        scope: project
+      codex-cli:
+        mode: agents-md-section
+
+  - name: specialist-implementer
+    description: Implementation specialist. Use to apply a scoped plan package with minimal, maintainable, secure, idiomatic code changes and report back without advancing the pipeline.
+    source: agents/specialist-implementer.agent.md
+    targets:
+      copilot-cli:
+        scope: user
+      claude-code:
+        scope: project
+      codex-cli:
+        mode: agents-md-section
+
+  - name: specialist-planner
+    description: Implementation planning specialist. Use to transform research and requirements into phased, executable plans with options, rollback, dependencies, and parallelization guidance.
+    source: agents/specialist-planner.agent.md
+    targets:
+      copilot-cli:
+        scope: user
+      claude-code:
+        scope: project
+      codex-cli:
+        mode: agents-md-section
+
+  - name: specialist-researcher
+    description: Repository research specialist. Use to inspect code, docs, tests, configs, architecture, dependencies, and behavior before planning or documenting.
+    source: agents/specialist-researcher.agent.md
+    targets:
+      copilot-cli:
+        scope: user
+      claude-code:
+        scope: project
+      codex-cli:
+        mode: agents-md-section
+
+  - name: specialist-reviewer
+    description: Adversarial code review specialist. Use to find blockers and critical issues in implementation correctness, security, performance, architecture, maintainability, semantics, and tests.
+    source: agents/specialist-reviewer.agent.md
+    targets:
+      copilot-cli:
+        scope: user
+      claude-code:
+        scope: project
+      codex-cli:
+        mode: agents-md-section
+
+  - name: specialist-validator
+    description: Validation specialist. Use to design and execute validation strategies using project-native commands, tests, lint, build, type checks, security checks, and acceptance criteria.
+    source: agents/specialist-validator.agent.md
+    targets:
+      copilot-cli:
+        scope: user
+      claude-code:
+        scope: project
+      codex-cli:
+        mode: agents-md-section
+
+  - name: workflow-development
+    description: Coordinates implementation from an approved plan and validation strategy. Use for code changes that require implementation, validation, review, and correction loops.
+    source: agents/workflow-development.agent.md
+    targets:
+      copilot-cli:
+        scope: user
+      claude-code:
+        scope: project
+      codex-cli:
+        mode: agents-md-section
+
+  - name: workflow-documentation
+    description: Documentation workflow agent for auditing stale documentation, updating existing docs, and creating new documentation for the completed task.
+    source: agents/workflow-documentation.agent.md
+    targets:
+      copilot-cli:
+        scope: user
+      claude-code:
+        scope: project
+      codex-cli:
+        mode: agents-md-section
+
+  - name: workflow-full
+    description: Full pipeline workflow agent for executing multiple workflows end-to-end. Use when the user asks for full work, complete delivery, autonomous execution, or a chained workflow.
+    source: agents/workflow-full.agent.md
+    targets:
+      copilot-cli:
+        scope: user
+      claude-code:
+        scope: project
+      codex-cli:
+        mode: agents-md-section
+
+  - name: workflow-learning
+    description: Learning workflow agent for extracting reusable project knowledge from completed work and creating reusable Copilot skills.
+    source: agents/workflow-learning.agent.md
+    targets:
+      copilot-cli:
+        scope: user
+      claude-code:
+        scope: project
+      codex-cli:
+        mode: agents-md-section
+
+  - name: workflow-refinement
+    description: Coordinates deep research followed by planning with multiple implementation options. Use when a request must be clarified, decomposed, and turned into technical options before development.
+    source: agents/workflow-refinement.agent.md
+    targets:
+      copilot-cli:
+        scope: user
+      claude-code:
+        scope: project
+      codex-cli:
+        mode: agents-md-section
+
+  - name: workflow-review
+    description: Review workflow agent for validating and reviewing the current patch. Use when a task has already produced code changes and the next step is to verify correctness before delivery.
+    source: agents/workflow-review.agent.md
+    targets:
+      copilot-cli:
+        scope: user
+      claude-code:
+        scope: project
+      codex-cli:
+        mode: agents-md-section
+
+  - name: workflow-spike
+    description: Coordinates discovery and documentation without implementation. Use for technical spikes, legacy understanding, architecture investigation, or documentation-first tasks.
+    source: agents/workflow-spike.agent.md
+    targets:
+      copilot-cli:
+        scope: user
+      claude-code:
+        scope: project
+      codex-cli:
+        mode: agents-md-section
+
+  - name: workflow-validation
+    description: Coordinates validation planning and active validation. Use when a plan, implementation, or change set must be verified with tests, lint, security checks, or acceptance criteria.
+    source: agents/workflow-validation.agent.md
+    targets:
+      copilot-cli:
+        scope: user
+      claude-code:
+        scope: project
+      codex-cli:
+        mode: agents-md-section
+
+skills:
+  - name: arbitration
+    description: Compare competing outputs and select the safest, most correct, most maintainable result.
+    source: skills/arbitration
+    targets:
+      copilot-cli:
+        scope: user
+      claude-code:
+        scope: project
+      codex-cli:
+        scope: project
+
+  - name: context-budget
+    description: Build a minimal context package for delegation without dumping the entire conversation, repository, logs, or memory.
+    source: skills/context-budget
+    targets:
+      copilot-cli:
+        scope: user
+      claude-code:
+        scope: project
+      codex-cli:
+        scope: project
+
+  - name: council-evidence-index
+    description: Build the evidence foundation for a council judgment.
+    source: skills/council-evidence-index
+    targets:
+      copilot-cli:
+        scope: user
+      claude-code:
+        scope: project
+      codex-cli:
+        scope: project
+
+  - name: council-minutes
+    description: Create the official council minutes artifact.
+    source: skills/council-minutes
+    targets:
+      copilot-cli:
+        scope: user
+      claude-code:
+        scope: project
+      codex-cli:
+        scope: project
+
+  - name: council-scoring-verdict
+    description: Score every involved agent and produce the final verdict.
+    source: skills/council-scoring-verdict
+    targets:
+      copilot-cli:
+        scope: user
+      claude-code:
+        scope: project
+      codex-cli:
+        scope: project
+
+  - name: council-summons-testimony
+    description: Summon each workflow agent and force it to justify its performance.
+    source: skills/council-summons-testimony
+    targets:
+      copilot-cli:
+        scope: user
+      claude-code:
+        scope: project
+      codex-cli:
+        scope: project
+
+  - name: documentation-audit
+    description: Identify documentation that should be updated, created, or intentionally left unchanged based on the current task and patch.
+    source: skills/documentation-audit
+    targets:
+      copilot-cli:
+        scope: user
+      claude-code:
+        scope: project
+      codex-cli:
+        scope: project
+
+  - name: documentation-update
+    description: Apply concise documentation changes based on verified behavior and the documentation audit.
+    source: skills/documentation-update
+    targets:
+      copilot-cli:
+        scope: user
+      claude-code:
+        scope: project
+      codex-cli:
+        scope: project
+
+  - name: final-report
+    description: Create a concise final report for completed, partial, blocked, or failed orchestration work.
+    source: skills/final-report
+    targets:
+      copilot-cli:
+        scope: user
+      claude-code:
+        scope: project
+      codex-cli:
+        scope: project
+
+  - name: full-workflow-chain
+    description: Build a deterministic multi-workflow pipeline with explicit gates, required artifacts, and stop conditions.
+    source: skills/full-workflow-chain
+    targets:
+      copilot-cli:
+        scope: user
+      claude-code:
+        scope: project
+      codex-cli:
+        scope: project
+
+  - name: go-amqp-ack-callback
+    description: Remove amqp.Delivery from service structs and business methods by replacing it with a callback-based design.
+    source: skills/go-amqp-ack-callback
+    targets:
+      copilot-cli:
+        scope: user
+      claude-code:
+        scope: project
+      codex-cli:
+        scope: project
+
+  - name: go-repository-interface-extraction
+    description: Extract a Go repository interface from a concrete struct so that services depend on abstractions, not implementations.
+    source: skills/go-repository-interface-extraction
+    targets:
+      copilot-cli:
+        scope: user
+      claude-code:
+        scope: project
+      codex-cli:
+        scope: project
+
+  - name: handoff-contract
+    description: Create a strict delegation contract between orchestrator, workflow agents, and specialist agents.
+    source: skills/handoff-contract
+    targets:
+      copilot-cli:
+        scope: user
+      claude-code:
+        scope: project
+      codex-cli:
+        scope: project
+
+  - name: knowledge-extraction
+    description: Extract durable reusable lessons after a completed session while avoiding memory bloat, secrets, stale task details, and useless trivia.
+    source: skills/knowledge-extraction
+    targets:
+      copilot-cli:
+        scope: user
+      claude-code:
+        scope: project
+      codex-cli:
+        scope: project
+
+  - name: memory-management
+    description: Manage reusable memories with minimal token cost.
+    source: skills/memory-management
+    targets:
+      copilot-cli:
+        scope: user
+      claude-code:
+        scope: project
+      codex-cli:
+        scope: project
+
+  - name: parallel-execution
+    description: Determine whether a task can be safely split across multiple agents and define conflict-free work packages.
+    source: skills/parallel-execution
+    targets:
+      copilot-cli:
+        scope: user
+      claude-code:
+        scope: project
+      codex-cli:
+        scope: project
+
+  - name: patch-review
+    description: Review the patch as a delivery artifact, not as a pile of changed files.
+    source: skills/patch-review
+    targets:
+      copilot-cli:
+        scope: user
+      claude-code:
+        scope: project
+      codex-cli:
+        scope: project
+
+  - name: phase-gate
+    description: Evaluate whether a produced artifact is good enough for the workflow to advance.
+    source: skills/phase-gate
+    targets:
+      copilot-cli:
+        scope: user
+      claude-code:
+        scope: project
+      codex-cli:
+        scope: project
+
+  - name: prd-to-implementation-plan
+    description: Transform a finalized PRD into a deterministic implementation plan that can be executed by an implementer without guessing what the product team meant.
+    source: skills/prd-to-implementation-plan
+    targets:
+      copilot-cli:
+        scope: user
+      claude-code:
+        scope: project
+      codex-cli:
+        scope: project
+
+  - name: raw-card-to-prd
+    description: Transform a vague, incomplete, or ambiguous product card into a clear PRD using a human-in-the-loop refinement process.
+    source: skills/raw-card-to-prd
+    targets:
+      copilot-cli:
+        scope: user
+      claude-code:
+        scope: project
+      codex-cli:
+        scope: project
+
+  - name: rollback-checkpoint
+    description: Force large or risky changes into smaller reversible phases with validation and rollback plans.
+    source: skills/rollback-checkpoint
+    targets:
+      copilot-cli:
+        scope: user
+      claude-code:
+        scope: project
+      codex-cli:
+        scope: project
+
+  - name: skill-generation
+    description: Generate reusable Copilot skills from stable project knowledge.
+    source: skills/skill-generation
+    targets:
+      copilot-cli:
+        scope: user
+      claude-code:
+        scope: project
+      codex-cli:
+        scope: project
+
+  - name: surprise-council-judgment
+    description: Run an independent surprise council judgment against an existing workflow.
+    source: skills/surprise-council-judgment
+    targets:
+      copilot-cli:
+        scope: user
+      claude-code:
+        scope: project
+      codex-cli:
+        scope: project
+
+  - name: timeout-retry
+    description: Control retries, correction loops, stalled agents, incomplete artifacts, and escalation.
+    source: skills/timeout-retry
+    targets:
+      copilot-cli:
+        scope: user
+      claude-code:
+        scope: project
+      codex-cli:
+        scope: project
+
+  - name: validation-strategy
+    description: Create a concrete validation strategy mapped to acceptance criteria, project commands, risk areas, and regression coverage.
+    source: skills/validation-strategy
+    targets:
+      copilot-cli:
+        scope: user
+      claude-code:
+        scope: project
+      codex-cli:
+        scope: project
+
+  - name: workflow-routing
+    description: Classify the current software engineering request and select exactly one primary workflow for the orchestrator to delegate.
+    source: skills/workflow-routing
+    targets:
+      copilot-cli:
+        scope: user
+      claude-code:
+        scope: project
+      codex-cli:
+        scope: project
