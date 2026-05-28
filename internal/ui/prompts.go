@@ -10,7 +10,10 @@ import (
 
 	"github.com/jeanmolossi/vibe-and-kalika-code/internal/manifest"
 	"github.com/jeanmolossi/vibe-and-kalika-code/internal/platform"
+	"github.com/jeanmolossi/vibe-and-kalika-code/internal/source"
 )
+
+const sourceTypeGit = "git"
 
 // InstallSummary holds data for ShowFinalSummary, avoiding an import of the app package.
 type InstallSummary struct {
@@ -57,7 +60,10 @@ func AskSource(assumeYes bool, defaultSrc string) (SourceInput, error) {
 	}
 
 	if nonInteractive {
-		return SourceInput{}, fmt.Errorf("source is required in non-interactive mode (pass it as an argument or use --yes with a source)")
+		return SourceInput{
+			SourceType: sourceTypeGit,
+			Source:     source.DefaultSource,
+		}, nil
 	}
 
 	// Step 1: pick type.
@@ -67,7 +73,7 @@ func AskSource(assumeYes bool, defaultSrc string) (SourceInput, error) {
 			Title("Package source type").
 			Options(
 				huh.NewOption("Local directory", "local"),
-				huh.NewOption("Git repository URL", "git"),
+				huh.NewOption("Git repository URL", sourceTypeGit),
 			).
 			Value(&sourceType),
 	))
@@ -77,7 +83,7 @@ func AskSource(assumeYes bool, defaultSrc string) (SourceInput, error) {
 
 	// Step 2: enter path/URL.
 	placeholder := "./path/to/package"
-	if sourceType == "git" {
+	if sourceType == sourceTypeGit {
 		placeholder = "https://github.com/user/repo"
 	}
 	var sourcePath string
@@ -237,7 +243,7 @@ func ShowFinalSummary(s InstallSummary) {
 func sourceKind(src string) string {
 	for _, prefix := range []string{"http://", "https://", "git@", "ssh://", "file://"} {
 		if strings.HasPrefix(src, prefix) {
-			return "git"
+			return sourceTypeGit
 		}
 	}
 	return "local"
