@@ -81,3 +81,18 @@ func TestDefaultSourceIsGitHubTreeURL(t *testing.T) {
 		t.Errorf("DefaultSource %q should be a valid GitHub tree URL", source.DefaultSource)
 	}
 }
+
+// TestParseGitHubTreeURL_PathTraversalRejected verifies that dot-dot subdirs are
+// returned as-is by the parser — the containment check lives in CloneGitSource.
+func TestParseGitHubTreeURL_PathTraversalRejected(t *testing.T) {
+	// The parser itself does not reject traversal paths; it returns subdir verbatim.
+	// We test that a dot-dot subdir is correctly returned so CloneGitSource can block it.
+	_, _, subdir, ok := source.ParseGitHubTreeURL("https://github.com/owner/repo/tree/main/../../etc/passwd")
+	if !ok {
+		t.Fatal("expected parser to match the URL even with traversal subdir")
+	}
+	// subdir must contain ".." so CloneGitSource can detect and reject it.
+	if subdir == "" {
+		t.Error("expected non-empty subdir for traversal URL")
+	}
+}

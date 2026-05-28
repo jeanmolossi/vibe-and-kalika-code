@@ -69,7 +69,12 @@ func CloneGitSource(source, projectRoot string) (*ResolvedSource, error) {
 		}
 		root := dir
 		if ghSubdir != "" {
-			root = filepath.Join(dir, ghSubdir)
+			root = filepath.Join(dir, filepath.FromSlash(ghSubdir))
+			// Guard against path traversal: the resolved root must stay within dir.
+			dirClean := filepath.Clean(dir) + string(filepath.Separator)
+			if !strings.HasPrefix(filepath.Clean(root)+string(filepath.Separator), dirClean) {
+				return nil, fmt.Errorf("subdir %q escapes clone root — refusing unsafe path", ghSubdir)
+			}
 			if _, err := os.Stat(root); err != nil {
 				return nil, fmt.Errorf("subdir %q not found after clone: %w", ghSubdir, err)
 			}
