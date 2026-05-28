@@ -1,0 +1,24 @@
+name: valid-basic
+version: 0.1.0
+description: Valid basic test package
+targets:
+  - copilot-cli
+  - claude-code
+agents:
+  - name: test-agent
+    description: Test agent
+    source: agents/test-agent.md
+    targets:
+      copilot-cli:
+        scope: user
+      claude-code:
+        scope: project
+skills:
+  - name: test-skill
+    description: Test skill
+    source: skills/test-skill
+    targets:
+      copilot-cli:
+        scope: user
+      claude-code:
+        scope: project
