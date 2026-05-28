@@ -157,6 +157,25 @@ No filesystem writes.
 
 ---
 
+### `vkc update`
+
+Checks installed packages for newer versions and re-installs outdated ones.
+
+```bash
+vkc update
+vkc update --self
+```
+
+**Flags:**
+
+| Flag | Default | Description |
+|---|---|---|
+| `--dry-run` | false | Show plan without applying any changes |
+| `--yes` | false | Skip confirmation prompts |
+| `--self` | false | Update the `vkc` binary itself from the latest GitHub release (verifies SHA256 checksum, atomically replaces running binary) |
+
+---
+
 ## Package Format
 
 A `vkc`-installable package is a directory containing a `manifest.yaml` and source files for agents and skills.
@@ -265,7 +284,6 @@ See `examples/basic-pack/` for a minimal reference package.
 
 - Git sources require network connectivity.
 - `vkc uninstall` is not implemented. Installation state is tracked in `.ai-setup/installed.yaml` for future use.
-- `vkc update` is not implemented.
 - Claude Code user scope (`~/.claude/`) is detected but not installed to by default.
 
 ---
