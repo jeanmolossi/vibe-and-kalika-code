@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"bufio"
 	"fmt"
 	"io"
 	"os"
@@ -23,22 +22,44 @@ const replHelp = `Available commands:
   /validate      — validate a package
   /exit, /quit   — exit the REPL`
 
+// readLine reads exactly one newline-terminated line from r, one byte at a time.
+// This avoids buffering stdin ahead of subcommands that also need to read from it.
+func readLine(r io.Reader) (string, error) {
+	var buf []byte
+	b := make([]byte, 1)
+	for {
+		n, err := r.Read(b)
+		if n > 0 {
+			if b[0] == '\n' {
+				return strings.TrimRight(string(buf), "\r"), nil
+			}
+			buf = append(buf, b[0])
+		}
+		if err != nil {
+			if err == io.EOF && len(buf) > 0 {
+				return string(buf), nil
+			}
+			return "", err
+		}
+	}
+}
+
 func runREPL(baseFactory func() *cobra.Command, out io.Writer) {
 	fmt.Fprintln(out, "Welcome to vkc interactive mode. Type /help for available commands.")
 
 	isTTY := isatty.IsTerminal(os.Stdin.Fd())
-	scanner := bufio.NewScanner(os.Stdin)
 
 	for {
 		if isTTY {
 			fmt.Fprint(out, "> ")
 		}
 
-		if !scanner.Scan() {
+		line, err := readLine(os.Stdin)
+		if err != nil {
 			break
 		}
 
-		line := strings.TrimSpace(scanner.Text())
+		line = strings.TrimSpace(line)
 		if line == "" {
 			continue
 		}
