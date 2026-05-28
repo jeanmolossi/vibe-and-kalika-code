@@ -10,6 +10,10 @@ import (
 	"github.com/jeanmolossi/vibe-and-kalika-code/internal/version"
 )
 
+const version100 = "1.0.0"
+
+const devVersion = "dev"
+
 // --- helpers -----------------------------------------------------------------
 
 type mockHTTPClient struct {
@@ -49,11 +53,11 @@ func TestIsOutdated(t *testing.T) {
 		latest    string
 		want      bool
 	}{
-		{"dev vs release", "dev", "1.0.0", true},
-		{"same version with v prefix", "v1.0.0", "1.0.0", false},
-		{"same version no prefix", "1.0.0", "1.0.0", false},
-		{"older installed", "1.0.0", "1.1.0", true},
-		{"both dev", "dev", "dev", false},
+		{"dev vs release", devVersion, version100, true},
+		{"same version with v prefix", "v1.0.0", version100, false},
+		{"same version no prefix", version100, version100, false},
+		{"older installed", version100, "1.1.0", true},
+		{"both dev", devVersion, devVersion, false},
 		{"v prefix both sides", "v1.2.3", "v1.2.3", false},
 	}
 
