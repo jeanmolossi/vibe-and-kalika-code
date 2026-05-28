@@ -16,7 +16,10 @@ func newUninstallCmd() *cobra.Command {
 		Short: "Uninstall a previously installed package",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			projectRoot, _ := os.Getwd()
+			projectRoot, err := os.Getwd()
+			if err != nil {
+				return fmt.Errorf("resolve project root: %w", err)
+			}
 			res, code, err := app.Uninstall(app.UninstallOptions{
 				Package:     args[0],
 				ProjectRoot: projectRoot,

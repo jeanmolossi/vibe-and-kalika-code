@@ -52,7 +52,12 @@ func Uninstall(opts UninstallOptions) (*UninstallResult, int, error) {
 
 	if opts.DryRun {
 		result.FilesRemoved = rec.CreatedFiles
-		result.MarkersRemoved = rec.ManagedMarkers
+		for _, block := range rec.AgentBlocks {
+			result.MarkersRemoved = append(result.MarkersRemoved, block.Path)
+		}
+		if rec.BackupPath != "" {
+			result.FilesRestored = rec.Files
+		}
 		return result, ExitSuccess, nil
 	}
 
@@ -61,7 +66,7 @@ func Uninstall(opts UninstallOptions) (*UninstallResult, int, error) {
 		if err := security.EnsureWithinRoot(opts.ProjectRoot, block.Path); err != nil {
 			return nil, ExitSecurityViolation, fmt.Errorf("block path %s escapes project root: %w", block.Path, err)
 		}
-		if err := installer.RemoveManagedBlock(block.Path, block.AgentName); err != nil {
+		if err := installer.RemoveManagedBlock(block.Path, block.AgentName, opts.ProjectRoot); err != nil {
 			return nil, ExitError, fmt.Errorf("remove managed block %s: %w", block.Path, err)
 		}
 		result.MarkersRemoved = append(result.MarkersRemoved, block.Path)

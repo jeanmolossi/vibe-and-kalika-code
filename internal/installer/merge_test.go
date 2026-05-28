@@ -62,7 +62,7 @@ func TestRemoveManagedBlock(t *testing.T) {
 		if err := os.WriteFile(target, []byte(content), 0o644); err != nil {
 			t.Fatal(err)
 		}
-		if err := installer.RemoveManagedBlock(target, "agent-a"); err != nil {
+		if err := installer.RemoveManagedBlock(target, "agent-a", dir); err != nil {
 			t.Fatal(err)
 		}
 		got, _ := os.ReadFile(target)
@@ -81,7 +81,7 @@ func TestRemoveManagedBlock(t *testing.T) {
 		if err := os.WriteFile(target, []byte(original), 0o644); err != nil {
 			t.Fatal(err)
 		}
-		if err := installer.RemoveManagedBlock(target, "agent-a"); err != nil {
+		if err := installer.RemoveManagedBlock(target, "agent-a", dir); err != nil {
 			t.Fatal(err)
 		}
 		got, _ := os.ReadFile(target)
@@ -97,7 +97,7 @@ func TestRemoveManagedBlock(t *testing.T) {
 		if err := os.WriteFile(target, []byte(content), 0o644); err != nil {
 			t.Fatal(err)
 		}
-		if err := installer.RemoveManagedBlock(target, "agent-a"); err != nil {
+		if err := installer.RemoveManagedBlock(target, "agent-a", dir); err != nil {
 			t.Fatal(err)
 		}
 		got, _ := os.ReadFile(target)
@@ -112,7 +112,7 @@ func TestRemoveManagedBlock(t *testing.T) {
 	t.Run("file_does_not_exist", func(t *testing.T) {
 		dir := t.TempDir()
 		target := filepath.Join(dir, "nonexistent.md")
-		if err := installer.RemoveManagedBlock(target, "agent-a"); err != nil {
+		if err := installer.RemoveManagedBlock(target, "agent-a", dir); err != nil {
 			t.Fatalf("expected no error for missing file, got: %v", err)
 		}
 	})

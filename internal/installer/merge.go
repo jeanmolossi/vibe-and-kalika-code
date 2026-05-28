@@ -47,7 +47,13 @@ func MergeAgentFile(targetPath, agentName, sourcePath, allowedRoot string) error
 
 // RemoveManagedBlock removes the managed block for agentName from the file at targetPath.
 // If the file does not exist or the block is not present, it returns nil (idempotent).
-func RemoveManagedBlock(targetPath, agentName string) error {
+// If allowedRoot is non-empty, the path is verified to be within that root before any I/O.
+func RemoveManagedBlock(targetPath, agentName, allowedRoot string) error {
+	if allowedRoot != "" {
+		if err := security.EnsureResolvedWithinRoot(allowedRoot, targetPath); err != nil {
+			return fmt.Errorf("block path escapes allowed root: %w", err)
+		}
+	}
 	data, err := os.ReadFile(targetPath)
 	if os.IsNotExist(err) {
 		return nil
@@ -65,5 +71,8 @@ func RemoveManagedBlock(targetPath, agentName string) error {
 	normalized := blankLines.ReplaceAllString(removed, "\n\n")
 	// Ensure final newline
 	normalized = strings.TrimRight(normalized, "\n") + "\n"
+	if strings.TrimSpace(normalized) == "" {
+		return os.Remove(targetPath)
+	}
 	return os.WriteFile(targetPath, []byte(normalized), 0o644)
 }
