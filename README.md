@@ -62,9 +62,9 @@ vkc detect
 Output example:
 
 ```
-copilot-cli detected=true  base=/home/user/.copilot
-claude-code  detected=true  base=/home/user/project/.claude
-codex-cli    detected=false base=
+[✓] copilot-cli   home=~/.copilot  agents=~/.copilot/agents/  skills=~/.copilot/skills/
+[✓] claude-code   home=./.claude   agents=./.claude/agents/   skills=./.claude/skills/
+[ ] codex-cli
 ```
 
 No filesystem writes.
@@ -109,7 +109,9 @@ vkc install git@github.com:org/agent-pack.git
 | `--dry-run` | false | Show plan without writing any files |
 | `--yes` | false | Skip confirmation prompts |
 | `--targets` | (all) | Comma-separated platform targets, e.g. `copilot-cli,claude-code` |
-| `--conflict-action` | `skip` | How to handle conflicts: `skip`, `overwrite`, `backup-and-overwrite` |
+| `--conflict-action` | `skip` | How to handle conflicts: `skip`, `overwrite`, `backup-and-overwrite`, `write-as-new` |
+
+Output shows `✓ Installed <name> <version>` with created/modified/skipped counts and a report path.
 
 A dry-run plan is always shown before any changes are applied, even without `--dry-run`.
 
@@ -125,7 +127,14 @@ vkc init ./my-pack
 vkc init --yes ./my-pack
 ```
 
-> **Note:** The interactive wizard is currently a placeholder. For reliable non-interactive use, prefer `vkc install <source>`.
+Steps performed:
+1. Detect installed platforms
+2. Prompt for source (if not provided)
+3. Parse and validate manifest
+4. Show dry-run plan
+5. Prompt for conflict resolution
+6. Apply changes
+7. Write state and report
 
 ---
 
@@ -203,7 +212,9 @@ skills:
         scope: project
 ```
 
-See `examples/basic-pack/` for a working reference package.
+See `examples/basic-pack/` for a minimal reference package.
+
+`packages/kalika-ofc/` is a full real-world example with 16 agents and 26 skills ready to install.
 
 ---
 
@@ -232,6 +243,7 @@ See `examples/basic-pack/` for a working reference package.
 | Variable | Description |
 |---|---|
 | `COPILOT_HOME` | Override the Copilot CLI home directory (default: `~/.copilot`) |
+| `CODEX_HOME` | Override the Codex CLI home directory |
 
 ---
 
@@ -251,7 +263,6 @@ See `examples/basic-pack/` for a working reference package.
 
 ## Known Limitations
 
-- `vkc init` interactive wizard is a placeholder — use `vkc install <source>` for non-interactive installs.
 - Git sources require network connectivity.
 - `vkc uninstall` is not implemented. Installation state is tracked in `.ai-setup/installed.yaml` for future use.
 - `vkc update` is not implemented.
@@ -270,6 +281,7 @@ go test -race ./...
 
 # Lint and vet
 go vet ./...
+golangci-lint run ./...
 
 # Build binary
 go build -o vkc ./cmd/vkc
@@ -284,12 +296,12 @@ go test ./internal/integration/...
 
 These files describe the design intent and are kept as-is for reference:
 
-- `PRD.md` — Product requirements
-- `ARCHITECTURE.md` — Technical architecture
-- `IMPLEMENTATION_PLAN.md` — Execution plan
-- `CLI_SPEC.md` — CLI commands and UX
-- `MANIFEST_SPEC.md` — Package manifest contract
-- `FILE_MAPPING_SPEC.md` — Target filesystem mapping per platform
-- `VALIDATION_AND_ACCEPTANCE.md` — Validation and acceptance criteria
-- `PROMPT_FOR_LLM_WORKER.md` — LLM implementation prompt
-- `examples/basic-pack/` — Reference installable package
+- `specs/PRD.md` — Product requirements
+- `specs/ARCHITECTURE.md` — Technical architecture
+- `specs/IMPLEMENTATION_PLAN.md` — Execution plan
+- `specs/CLI_SPEC.md` — CLI commands and UX
+- `specs/MANIFEST_SPEC.md` — Package manifest contract
+- `specs/FILE_MAPPING_SPEC.md` — Target filesystem mapping per platform
+- `specs/VALIDATION_AND_ACCEPTANCE.md` — Validation and acceptance criteria
+- `examples/basic-pack/` — Minimal reference installable package
+- `packages/kalika-ofc/` — Full real-world installable package

@@ -24,7 +24,9 @@ func newInstallCmd() *cobra.Command {
 			if err != nil {
 				return exitError(code, err)
 			}
-			fmt.Fprintf(cmd.OutOrStdout(), "Installed %s %s\n", res.Manifest.Name, res.Manifest.Version)
+			out := cmd.OutOrStdout()
+			fmt.Fprintf(out, "✓ Installed %s %s\n", res.Manifest.Name, res.Manifest.Version)
+			printInstallSummary(out, res)
 			return nil
 		},
 	}
@@ -33,6 +35,30 @@ func newInstallCmd() *cobra.Command {
 	cmd.Flags().StringVar(&targetsCSV, "targets", "", "Comma-separated targets")
 	cmd.Flags().StringVar(&conflictAction, "conflict-action", "skip", "skip|overwrite|backup-and-overwrite")
 	return cmd
+}
+
+func printInstallSummary(out interface{ Write([]byte) (int, error) }, res *app.InstallResult) {
+	created, modified, skipped := countOps(res)
+	fmt.Fprintf(out, "  created:  %d files\n", created)
+	fmt.Fprintf(out, "  modified: %d files\n", modified)
+	fmt.Fprintf(out, "  skipped:  %d files\n", skipped)
+	if res.ReportPath != "" {
+		fmt.Fprintf(out, "  report:   %s\n", res.ReportPath)
+	}
+}
+
+func countOps(res *app.InstallResult) (created, modified, skipped int) {
+	for _, op := range res.Plan.Operations {
+		switch op.Type {
+		case platform.OperationCreate:
+			created++
+		case platform.OperationModify:
+			modified++
+		case platform.OperationSkip:
+			skipped++
+		}
+	}
+	return created, modified, skipped
 }
 
 func parseTargets(csv string) []platform.Platform {
