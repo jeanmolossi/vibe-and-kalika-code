@@ -66,6 +66,10 @@ type githubAsset struct {
 // httpClientTimeout is the timeout applied to all HTTP calls for self-update.
 const httpClientTimeout = 30 * time.Second
 
+// maxBinarySize is the maximum number of bytes copied from any archive entry to
+// guard against decompression bomb attacks (G110).
+const maxBinarySize = 100 << 20 // 100 MiB
+
 // httpClient is the shared HTTP client used for self-update downloads.
 // Using an interface so tests can inject a mock.
 type httpDoer interface {
@@ -314,7 +318,7 @@ func downloadAndReplace(client httpDoer, rel *githubRelease, latestVersion strin
 		return fmt.Errorf("extract binary: %w", err)
 	}
 
-	if err := os.Chmod(binPath, 0o755); err != nil {
+	if err := os.Chmod(binPath, 0o755); err != nil { //#nosec G302 -- binary must be world-executable
 		return fmt.Errorf("chmod binary: %w", err)
 	}
 
@@ -386,7 +390,7 @@ func downloadFile(client httpDoer, url, dest string) error {
 		return fmt.Errorf("HTTP %d downloading asset", resp.StatusCode)
 	}
 
-	f, err := os.Create(dest)
+	f, err := os.Create(dest) //#nosec G304 -- dest is a path within os.MkdirTemp, not user input
 	if err != nil {
 		return err
 	}
@@ -400,7 +404,7 @@ func downloadFile(client httpDoer, url, dest string) error {
 
 // verifyChecksum computes the SHA256 of path and compares it to expected.
 func verifyChecksum(path, expected string) error {
-	f, err := os.Open(path)
+	f, err := os.Open(path) //#nosec G304 -- path is the downloaded asset in a temp directory
 	if err != nil {
 		return err
 	}
@@ -420,7 +424,7 @@ func verifyChecksum(path, expected string) error {
 
 // extractTarGz extracts a .tar.gz archive and returns the path to the "vkc" binary.
 func extractTarGz(src, destDir string) (string, error) {
-	f, err := os.Open(src)
+	f, err := os.Open(src) //#nosec G304 -- src is the downloaded asset in a temp directory
 	if err != nil {
 		return "", err
 	}
@@ -452,16 +456,23 @@ func extractTarGz(src, destDir string) (string, error) {
 		}
 
 		destPath := filepath.Join(destDir, base)
-		out, err := os.Create(destPath)
+		// Prevent zip-slip: verify destPath is contained within destDir.
+		if !strings.HasPrefix(filepath.Clean(destPath)+string(os.PathSeparator), filepath.Clean(destDir)+string(os.PathSeparator)) {
+			return "", fmt.Errorf("archive entry escapes destination directory: %s", hdr.Name)
+		}
+
+		out, err := os.Create(destPath) //#nosec G304 -- destPath validated against destDir above
 		if err != nil {
 			return "", err
 		}
 
-		if _, err := io.Copy(out, tr); err != nil { //nolint:gosec // controlled extraction
-			out.Close()
+		if _, err := io.Copy(out, io.LimitReader(tr, maxBinarySize)); err != nil {
+			_ = out.Close() // discard close error: copy already failed
 			return "", err
 		}
-		out.Close()
+		if err := out.Close(); err != nil {
+			return "", fmt.Errorf("close extracted binary: %w", err)
+		}
 
 		return destPath, nil
 	}
@@ -484,23 +495,30 @@ func extractZip(src, destDir string) (string, error) {
 		}
 
 		destPath := filepath.Join(destDir, base)
+		// Prevent zip-slip: verify destPath is contained within destDir.
+		if !strings.HasPrefix(filepath.Clean(destPath)+string(os.PathSeparator), filepath.Clean(destDir)+string(os.PathSeparator)) {
+			return "", fmt.Errorf("archive entry escapes destination directory: %s", f.Name)
+		}
+
 		rc, err := f.Open()
 		if err != nil {
 			return "", err
 		}
 
-		out, err := os.Create(destPath)
+		out, err := os.Create(destPath) //#nosec G304 -- destPath validated against destDir above
 		if err != nil {
 			rc.Close()
 			return "", err
 		}
 
-		_, err = io.Copy(out, rc) //nolint:gosec // controlled extraction
-		out.Close()
-		rc.Close()
-
-		if err != nil {
-			return "", err
+		_, copyErr := io.Copy(out, io.LimitReader(rc, maxBinarySize))
+		closeOutErr := out.Close()
+		_ = rc.Close() // zip entry reader close, non-actionable
+		if copyErr != nil {
+			return "", copyErr
+		}
+		if closeOutErr != nil {
+			return "", fmt.Errorf("close extracted binary: %w", closeOutErr)
 		}
 
 		return destPath, nil
