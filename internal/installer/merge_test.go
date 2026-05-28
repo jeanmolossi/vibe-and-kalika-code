@@ -53,3 +53,67 @@ func TestMergeAgentFileUsesAgentName(t *testing.T) {
 		t.Fatalf("block should appear exactly once after update, got %d occurrences:\n%s", count, content)
 	}
 }
+
+func TestRemoveManagedBlock(t *testing.T) {
+	t.Run("existing_block_removed", func(t *testing.T) {
+		dir := t.TempDir()
+		target := filepath.Join(dir, "AGENTS.md")
+		content := "# Header\n\n<!-- BEGIN VKC AGENT: agent-a -->\n## Agent: agent-a\n\nhello\n<!-- END VKC AGENT: agent-a -->\n\n# Footer\n"
+		if err := os.WriteFile(target, []byte(content), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		if err := installer.RemoveManagedBlock(target, "agent-a"); err != nil {
+			t.Fatal(err)
+		}
+		got, _ := os.ReadFile(target)
+		if strings.Contains(string(got), "BEGIN VKC AGENT: agent-a") {
+			t.Fatalf("block should be removed, got:\n%s", got)
+		}
+		if !strings.Contains(string(got), "# Header") || !strings.Contains(string(got), "# Footer") {
+			t.Fatalf("surrounding content should be preserved, got:\n%s", got)
+		}
+	})
+
+	t.Run("idempotent_missing_block", func(t *testing.T) {
+		dir := t.TempDir()
+		target := filepath.Join(dir, "AGENTS.md")
+		original := "# Just some content\n"
+		if err := os.WriteFile(target, []byte(original), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		if err := installer.RemoveManagedBlock(target, "agent-a"); err != nil {
+			t.Fatal(err)
+		}
+		got, _ := os.ReadFile(target)
+		if string(got) != original {
+			t.Fatalf("file should be unchanged, got:\n%s", got)
+		}
+	})
+
+	t.Run("other_content_preserved", func(t *testing.T) {
+		dir := t.TempDir()
+		target := filepath.Join(dir, "AGENTS.md")
+		content := "<!-- BEGIN VKC AGENT: agent-a -->\n## Agent: agent-a\n\nhello\n<!-- END VKC AGENT: agent-a -->\n\n<!-- BEGIN VKC AGENT: agent-b -->\n## Agent: agent-b\n\nworld\n<!-- END VKC AGENT: agent-b -->\n"
+		if err := os.WriteFile(target, []byte(content), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		if err := installer.RemoveManagedBlock(target, "agent-a"); err != nil {
+			t.Fatal(err)
+		}
+		got, _ := os.ReadFile(target)
+		if strings.Contains(string(got), "BEGIN VKC AGENT: agent-a") {
+			t.Fatalf("agent-a block should be removed, got:\n%s", got)
+		}
+		if !strings.Contains(string(got), "BEGIN VKC AGENT: agent-b") {
+			t.Fatalf("agent-b block should remain, got:\n%s", got)
+		}
+	})
+
+	t.Run("file_does_not_exist", func(t *testing.T) {
+		dir := t.TempDir()
+		target := filepath.Join(dir, "nonexistent.md")
+		if err := installer.RemoveManagedBlock(target, "agent-a"); err != nil {
+			t.Fatalf("expected no error for missing file, got: %v", err)
+		}
+	})
+}
