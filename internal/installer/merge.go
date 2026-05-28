@@ -54,7 +54,7 @@ func RemoveManagedBlock(targetPath, agentName, allowedRoot string) error {
 			return fmt.Errorf("block path escapes allowed root: %w", err)
 		}
 	}
-	data, err := os.ReadFile(targetPath)
+	data, err := os.ReadFile(targetPath) //#nosec G304 -- targetPath is validated by EnsureResolvedWithinRoot above
 	if os.IsNotExist(err) {
 		return nil
 	}
@@ -74,5 +74,5 @@ func RemoveManagedBlock(targetPath, agentName, allowedRoot string) error {
 	if strings.TrimSpace(normalized) == "" {
 		return os.Remove(targetPath)
 	}
-	return os.WriteFile(targetPath, []byte(normalized), 0o644)
+	return os.WriteFile(targetPath, []byte(normalized), 0o644) //#nosec G304,G306 -- targetPath validated above; 0o644 is intentional for team-readable config
 }
