@@ -278,8 +278,16 @@ func downloadAndReplace(client httpDoer, rel *githubRelease, latestVersion strin
 		return fmt.Errorf("fetch checksum: %w", err)
 	}
 
-	// Download the asset into a temp file.
-	tmpDir, err := os.MkdirTemp("", "vkc-update-*")
+	// Locate the running binary first so we can create the staging temp dir on
+	// the same filesystem, avoiding EXDEV (cross-device link) errors from os.Rename.
+	execPath, err := os.Executable()
+	if err != nil {
+		return fmt.Errorf("locate executable: %w", err)
+	}
+	execDir := filepath.Dir(execPath)
+
+	// Download the asset into a temp dir on the same device as the binary.
+	tmpDir, err := os.MkdirTemp(execDir, "vkc-update-*")
 	if err != nil {
 		return fmt.Errorf("create temp dir: %w", err)
 	}
@@ -306,16 +314,11 @@ func downloadAndReplace(client httpDoer, rel *githubRelease, latestVersion strin
 		return fmt.Errorf("extract binary: %w", err)
 	}
 
-	// Atomically replace the running binary.
-	execPath, err := os.Executable()
-	if err != nil {
-		return fmt.Errorf("locate executable: %w", err)
-	}
-
 	if err := os.Chmod(binPath, 0o755); err != nil {
 		return fmt.Errorf("chmod binary: %w", err)
 	}
 
+	// os.Rename is atomic on Unix when src and dst are on the same filesystem.
 	if err := os.Rename(binPath, execPath); err != nil {
 		return fmt.Errorf("replace binary: %w", err)
 	}
@@ -348,6 +351,10 @@ func fetchExpectedChecksum(client httpDoer, url, filename string) (string, error
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("HTTP %d fetching checksums", resp.StatusCode)
+	}
+
 	scanner := bufio.NewScanner(resp.Body)
 	for scanner.Scan() {
 		line := scanner.Text()
@@ -375,13 +382,19 @@ func downloadFile(client httpDoer, url, dest string) error {
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("HTTP %d downloading asset", resp.StatusCode)
+	}
+
 	f, err := os.Create(dest)
 	if err != nil {
 		return err
 	}
 	defer f.Close()
 
-	_, err = io.Copy(f, resp.Body)
+	// Limit download to 100 MiB to guard against runaway responses.
+	const maxAssetSize = 100 << 20
+	_, err = io.Copy(f, io.LimitReader(resp.Body, maxAssetSize))
 	return err
 }
 

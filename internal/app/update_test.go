@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"strings"
 	"testing"
+
+	"github.com/jeanmolossi/vibe-and-kalika-code/internal/version"
 )
 
 // --- helpers -----------------------------------------------------------------
@@ -125,8 +127,11 @@ func TestUpdate_EmptyState(t *testing.T) {
 func TestSelfUpdate_AlreadyLatest(t *testing.T) {
 	t.Parallel()
 
-	// Mock: release tag matches current version.
-	rel := githubRelease{TagName: "vdev"}
+	// Build a tag that will match the current version.Version default ("dev").
+	// Using the package-level default avoids hardcoding "vdev" which would
+	// break if tests are built with a real version via ldflags.
+	currentTag := "v" + version.Version
+	rel := githubRelease{TagName: currentTag}
 	client := &mockHTTPClient{
 		responses: []*http.Response{
 			{StatusCode: http.StatusOK, Body: jsonBody(rel)},
@@ -210,6 +215,43 @@ func TestFetchExpectedChecksum_NotFound(t *testing.T) {
 	_, err := fetchExpectedChecksum(client, "http://example.com/checksums.txt", "missing.tar.gz")
 	if err == nil {
 		t.Error("expected error for missing file, got nil")
+	}
+}
+
+func TestFetchExpectedChecksum_HTTPError(t *testing.T) {
+	t.Parallel()
+
+	client := &mockHTTPClient{
+		responses: []*http.Response{
+			{StatusCode: http.StatusForbidden, Body: stringBody("rate limited\n")},
+		},
+	}
+
+	_, err := fetchExpectedChecksum(client, "http://example.com/checksums.txt", "any.tar.gz")
+	if err == nil {
+		t.Fatal("expected error for HTTP 403, got nil")
+	}
+	if !strings.Contains(err.Error(), "403") {
+		t.Errorf("error should mention HTTP status, got: %v", err)
+	}
+}
+
+func TestDownloadFile_HTTPError(t *testing.T) {
+	t.Parallel()
+
+	client := &mockHTTPClient{
+		responses: []*http.Response{
+			{StatusCode: http.StatusNotFound, Body: stringBody("not found\n")},
+		},
+	}
+
+	dest := t.TempDir() + "/asset.tar.gz"
+	err := downloadFile(client, "http://example.com/asset.tar.gz", dest)
+	if err == nil {
+		t.Fatal("expected error for HTTP 404, got nil")
+	}
+	if !strings.Contains(err.Error(), "404") {
+		t.Errorf("error should mention HTTP status, got: %v", err)
 	}
 }
 
