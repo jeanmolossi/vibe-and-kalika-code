@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/jeanmolossi/vibe-and-kalika-code/internal/app"
 	"github.com/spf13/cobra"
+
+	"github.com/jeanmolossi/vibe-and-kalika-code/internal/app"
 )
 
 func newDoctorCmd() *cobra.Command {

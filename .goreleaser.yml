@@ -1,0 +1,89 @@
+version: 2
+
+project_name: vkc
+
+before:
+  hooks:
+    - go mod tidy
+    - go generate ./...
+
+builds:
+  - id: vkc
+    main: ./cmd/vkc
+    binary: vkc
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w
+      - -X github.com/jeanmolossi/vibe-and-kalika-code/internal/version.Version={{.Version}}
+      - -X github.com/jeanmolossi/vibe-and-kalika-code/internal/version.Commit={{.Commit}}
+      - -X github.com/jeanmolossi/vibe-and-kalika-code/internal/version.Date={{.Date}}
+
+archives:
+  - id: default
+    formats:
+      - tar.gz
+    format_overrides:
+      - goos: windows
+        formats:
+          - zip
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    files:
+      - README.md
+      - LICENSE*
+
+checksum:
+  name_template: "{{ .ProjectName }}_{{ .Version }}_checksums.txt"
+  algorithm: sha256
+
+changelog:
+  sort: asc
+  use: github
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^chore:"
+      - "^ci:"
+      - "Merge pull request"
+      - "Merge remote-tracking branch"
+      - "Merge branch"
+  groups:
+    - title: "🚀 New Features"
+      regexp: "^feat"
+      order: 0
+    - title: "🐛 Bug Fixes"
+      regexp: "^fix"
+      order: 1
+    - title: "⚡ Performance"
+      regexp: "^perf"
+      order: 2
+    - title: "🔒 Security"
+      regexp: "^sec|^security"
+      order: 3
+    - title: "Other changes"
+      order: 999
+
+release:
+  github:
+    owner: jeanmolossi
+    name: vibe-and-kalika-code
+  draft: false
+  prerelease: auto
+  name_template: "v{{ .Version }}"
+  footer: |
+    ## Installation
+
+    ```bash
+    # macOS / Linux (via curl)
+    curl -sSfL https://raw.githubusercontent.com/jeanmolossi/vibe-and-kalika-code/main/install.sh | sh
+
+    # or download the binary directly from the assets above
+    ```

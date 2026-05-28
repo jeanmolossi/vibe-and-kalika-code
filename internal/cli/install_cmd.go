@@ -5,9 +5,10 @@ import (
 	"os"
 	"strings"
 
+	"github.com/spf13/cobra"
+
 	"github.com/jeanmolossi/vibe-and-kalika-code/internal/app"
 	"github.com/jeanmolossi/vibe-and-kalika-code/internal/platform"
-	"github.com/spf13/cobra"
 )
 
 func newInstallCmd() *cobra.Command {

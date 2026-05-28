@@ -45,7 +45,7 @@ func Install(opts InstallOptions) (*InstallResult, int, error) {
 	if err != nil {
 		return nil, ExitSourceFetchError, err
 	}
-	defer resolved.Cleanup()
+	defer resolved.Cleanup() //nolint:errcheck // temp directory cleanup error is non-actionable
 	m, err := manifest.ParseFile(resolved.Root)
 	if err != nil {
 		return nil, ExitValidationError, err
@@ -76,7 +76,14 @@ func Install(opts InstallOptions) (*InstallResult, int, error) {
 	if err != nil {
 		return nil, ExitError, err
 	}
-	reportPath, err := report.WriteInstallReport(report.InstallReportInput{ProjectRoot: opts.ProjectRoot, Manifest: m, Source: opts.Source, Platforms: targets, Operations: instResult.Applied, Backup: instResult.Backup})
+	reportPath, err := report.WriteInstallReport(report.InstallReportInput{
+		ProjectRoot: opts.ProjectRoot,
+		Manifest:    m,
+		Source:      opts.Source,
+		Platforms:   targets,
+		Operations:  instResult.Applied,
+		Backup:      instResult.Backup,
+	})
 	if err != nil {
 		return nil, ExitError, err
 	}
@@ -84,7 +91,13 @@ func Install(opts InstallOptions) (*InstallResult, int, error) {
 	if err != nil {
 		return nil, ExitError, err
 	}
-	installRecord := state.Installation{Package: m.Name, Version: m.Version, Source: opts.Source, InstalledAt: time.Now().UTC().Format(time.RFC3339), ReportPath: reportPath}
+	installRecord := state.Installation{
+		Package:     m.Name,
+		Version:     m.Version,
+		Source:      opts.Source,
+		InstalledAt: time.Now().UTC().Format(time.RFC3339),
+		ReportPath:  reportPath,
+	}
 	if instResult.Backup != nil {
 		installRecord.BackupPath = instResult.Backup.Dir
 	}

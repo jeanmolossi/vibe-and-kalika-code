@@ -1,0 +1,164 @@
+version: "2"
+
+run:
+  timeout: 5m
+  modules-download-mode: readonly
+
+formatters:
+  enable:
+    - goimports
+    - gofmt
+  settings:
+    goimports:
+      local-prefixes:
+        - github.com/jeanmolossi/vibe-and-kalika-code
+
+linters:
+  enable:
+    - bodyclose
+    - copyloopvar
+    - dogsled
+    - dupl
+    - errcheck
+    - exhaustive
+    - funlen
+    - gocheckcompilerdirectives
+    - gochecknoinits
+    - goconst
+    - gocritic
+    - gocyclo
+    - godot
+    - goprintffuncname
+    - govet
+    - ineffassign
+    - lll
+    - misspell
+    - mnd
+    - nakedret
+    - noctx
+    - nolintlint
+    - prealloc
+    - predeclared
+    - revive
+    - rowserrcheck
+    - staticcheck
+    - testifylint
+    - thelper
+    - tparallel
+    - unconvert
+    - unparam
+    - unused
+    - whitespace
+
+  settings:
+    dupl:
+      threshold: 150
+
+    errcheck:
+      exclude-functions:
+        - fmt.Fprintf
+        - fmt.Fprintln
+        - fmt.Fprint
+        - (io.Closer).Close
+        - (*os.File).Close
+        - Cleanup
+
+    funlen:
+      lines: 120
+      statements: 60
+
+    gocyclo:
+      min-complexity: 35
+
+    goconst:
+      min-len: 3
+      min-occurrences: 3
+
+    gocritic:
+      enabled-tags:
+        - diagnostic
+        - experimental
+        - opinionated
+        - performance
+        - style
+      disabled-checks:
+        - dupImport
+        - ifElseChain
+        - octalLiteral
+        - whyNoLint
+        - rangeValCopy
+        - hugeParam
+        - paramTypeCombine
+
+    lll:
+      line-length: 200
+
+    misspell:
+      locale: US
+
+    mnd:
+      ignored-functions:
+        - "os.Chmod"
+        - "os.MkdirAll"
+        - "os.OpenFile"
+        - "os.WriteFile"
+      ignored-numbers:
+        - "0o644"
+        - "0o755"
+
+    nakedret:
+      max-func-lines: 30
+
+    nolintlint:
+      allow-unused: false
+      require-explanation: true
+      require-specific: true
+
+    revive:
+      confidence: 0.8
+      rules:
+        - name: blank-imports
+        - name: context-as-argument
+        - name: context-keys-type
+        - name: dot-imports
+        - name: error-return
+        - name: error-strings
+        - name: error-naming
+        - name: if-return
+        - name: increment-decrement
+        - name: var-naming
+        - name: var-declaration
+        - name: range
+        - name: receiver-naming
+        - name: time-naming
+        - name: indent-error-flow
+        - name: errorf
+        - name: empty-block
+        - name: superfluous-else
+        - name: unreachable-code
+        - name: redefines-builtin-id
+
+issues:
+  exclude-rules:
+    - path: .*_test\.go
+      linters:
+        - dupl
+        - funlen
+        - gochecknoinits
+        - mnd
+        - unparam
+        - lll
+        - noctx
+    - path: internal/integration/
+      linters:
+        - lll
+        - noctx
+        - unparam
+    - path: cmd/
+      linters:
+        - gochecknoinits
+  exclude-dirs:
+    - testdata
+    - vendor
+  max-issues-per-linter: 0
+  max-same-issues: 0
