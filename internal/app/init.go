@@ -41,6 +41,10 @@ func Init(projectRoot, src string, yes bool) (*InstallResult, int, error) {
 	}
 
 	// Step 5: ask for the package source.
+	// Default to the official package when no source is provided in non-interactive mode.
+	if src == "" && yes {
+		src = source.DefaultSource
+	}
 	sourceInput, err := ui.AskSource(yes, src)
 	if err != nil {
 		return nil, ExitUserCancelled, err

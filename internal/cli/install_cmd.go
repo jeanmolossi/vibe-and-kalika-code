@@ -9,18 +9,23 @@ import (
 
 	"github.com/jeanmolossi/vibe-and-kalika-code/internal/app"
 	"github.com/jeanmolossi/vibe-and-kalika-code/internal/platform"
+	"github.com/jeanmolossi/vibe-and-kalika-code/internal/source"
 )
 
 func newInstallCmd() *cobra.Command {
 	var yes, dryRun bool
 	var targetsCSV, conflictAction string
 	cmd := &cobra.Command{
-		Use:   "install <source>",
+		Use:   "install [source]",
 		Short: "Install a package from a local dir or git URL",
-		Args:  cobra.ExactArgs(1),
+		Args:  cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			projectRoot, _ := os.Getwd()
-			res, code, err := app.Install(app.InstallOptions{Source: args[0], ProjectRoot: projectRoot, Targets: parseTargets(targetsCSV), Yes: yes, DryRun: dryRun, ConflictAction: conflictAction})
+			src := source.DefaultSource
+			if len(args) > 0 {
+				src = args[0]
+			}
+			res, code, err := app.Install(app.InstallOptions{Source: src, ProjectRoot: projectRoot, Targets: parseTargets(targetsCSV), Yes: yes, DryRun: dryRun, ConflictAction: conflictAction})
 			if err != nil {
 				return exitError(code, err)
 			}
