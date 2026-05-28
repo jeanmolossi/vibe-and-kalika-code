@@ -76,10 +76,13 @@ func TestParseGitHubTreeURL(t *testing.T) {
 }
 
 func TestDefaultSourceIsGitHubTreeURL(t *testing.T) {
-	_, _, _, ok := source.ParseGitHubTreeURL(source.DefaultSource)
+	cloneURL, branch, subdir, ok := source.ParseGitHubTreeURL(source.DefaultSource)
 	if !ok {
 		t.Errorf("DefaultSource %q should be a valid GitHub tree URL", source.DefaultSource)
 	}
+	_ = cloneURL
+	_ = branch
+	_ = subdir
 }
 
 // TestParseGitHubTreeURL_PathTraversalRejected verifies that dot-dot subdirs are

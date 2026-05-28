@@ -20,23 +20,23 @@ func ParseGitHubTreeURL(rawURL string) (cloneURL, branch, subdir string, ok bool
 	if !strings.HasPrefix(rawURL, prefix) {
 		return "", "", "", false
 	}
+	const splitIntoTwo = 2
 	rest := strings.TrimPrefix(rawURL, prefix)
-	// rest = "owner/repo/tree/branch/sub/dir"
-	parts := strings.SplitN(rest, "/tree/", 2)
-	if len(parts) != 2 {
+	parts := strings.SplitN(rest, "/tree/", splitIntoTwo)
+	if len(parts) != splitIntoTwo {
 		return "", "", "", false
 	}
 	repoPath := parts[0]  // "owner/repo"
 	afterTree := parts[1] // "branch/sub/dir"
 
 	// repoPath must have exactly one slash (owner/repo)
-	repoParts := strings.SplitN(repoPath, "/", 2)
-	if len(repoParts) != 2 || repoParts[0] == "" || repoParts[1] == "" {
+	repoParts := strings.SplitN(repoPath, "/", splitIntoTwo)
+	if len(repoParts) != splitIntoTwo || repoParts[0] == "" || repoParts[1] == "" {
 		return "", "", "", false
 	}
 
 	// Split branch from subdir
-	branchAndSub := strings.SplitN(afterTree, "/", 2)
+	branchAndSub := strings.SplitN(afterTree, "/", splitIntoTwo)
 	if len(branchAndSub) == 0 || branchAndSub[0] == "" {
 		return "", "", "", false
 	}
