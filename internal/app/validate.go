@@ -17,7 +17,7 @@ func ValidateSource(projectRoot, src string) (*ValidateResult, int, error) {
 	if err != nil {
 		return nil, ExitSourceFetchError, err
 	}
-	defer resolved.Cleanup()
+	defer resolved.Cleanup() //nolint:errcheck // temp directory cleanup error is non-actionable
 	m, err := manifest.ParseFile(resolved.Root)
 	if err != nil {
 		return nil, ExitValidationError, err

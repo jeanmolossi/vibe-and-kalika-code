@@ -108,7 +108,7 @@ func Validate(packageRoot, projectRoot string, m *Manifest) ([]string, error) {
 	return nil, nil
 }
 
-func plannedTargetPath(packageRoot, projectRoot string, m *Manifest, target, name string, agent bool) string {
+func plannedTargetPath(_, projectRoot string, _ *Manifest, target, name string, agent bool) string {
 	switch target {
 	case "copilot-cli":
 		if agent {

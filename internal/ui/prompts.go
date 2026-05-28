@@ -7,6 +7,7 @@ import (
 
 	"github.com/charmbracelet/huh"
 	"github.com/charmbracelet/lipgloss"
+
 	"github.com/jeanmolossi/vibe-and-kalika-code/internal/manifest"
 	"github.com/jeanmolossi/vibe-and-kalika-code/internal/platform"
 )

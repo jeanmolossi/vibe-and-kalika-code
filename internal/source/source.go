@@ -21,7 +21,11 @@ func Resolve(source, projectRoot string) (*ResolvedSource, error) {
 }
 
 func IsGitURL(source string) bool {
-	return strings.HasPrefix(source, "http://") || strings.HasPrefix(source, "https://") || strings.HasPrefix(source, "git@") || strings.HasPrefix(source, "ssh://") || strings.HasPrefix(source, "file://")
+	return strings.HasPrefix(source, "http://") ||
+		strings.HasPrefix(source, "https://") ||
+		strings.HasPrefix(source, "git@") ||
+		strings.HasPrefix(source, "ssh://") ||
+		strings.HasPrefix(source, "file://")
 }
 
 func ResolveLocalSource(source string) (*ResolvedSource, error) {

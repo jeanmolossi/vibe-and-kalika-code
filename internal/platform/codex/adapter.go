@@ -51,7 +51,14 @@ func (a *Adapter) Plan(input platform.PlanInput) ([]platform.PlannedOperation, e
 			return nil, err
 		}
 		target := AgentTargetPath(input.ProjectRoot)
-		op := platform.PlannedOperation{Platform: a.Platform(), SourcePath: src, TargetPath: target, AllowedRoot: input.ProjectRoot, AgentName: agent.Name, Description: fmt.Sprintf("Merge agent %s into AGENTS.md", agent.Name)}
+		op := platform.PlannedOperation{
+			Platform:    a.Platform(),
+			SourcePath:  src,
+			TargetPath:  target,
+			AllowedRoot: input.ProjectRoot,
+			AgentName:   agent.Name,
+			Description: fmt.Sprintf("Merge agent %s into AGENTS.md", agent.Name),
+		}
 		if _, err := os.Stat(target); err == nil {
 			op.Type = platform.OperationModify
 			op.Conflict = &platform.Conflict{ExistingPath: target, Action: input.ConflictAction}
@@ -69,7 +76,13 @@ func (a *Adapter) Plan(input platform.PlanInput) ([]platform.PlannedOperation, e
 			return nil, err
 		}
 		target := SkillTargetPath(input.ProjectRoot, skill.Name)
-		op := platform.PlannedOperation{Platform: a.Platform(), SourcePath: src, TargetPath: target, AllowedRoot: filepath.Join(input.ProjectRoot, ".agents"), Description: fmt.Sprintf("Install skill %s", skill.Name)}
+		op := platform.PlannedOperation{
+			Platform:    a.Platform(),
+			SourcePath:  src,
+			TargetPath:  target,
+			AllowedRoot: filepath.Join(input.ProjectRoot, ".agents"),
+			Description: fmt.Sprintf("Install skill %s", skill.Name),
+		}
 		if _, err := os.Stat(target); err == nil {
 			op.Type = platform.OperationModify
 			op.Conflict = &platform.Conflict{ExistingPath: target, Action: input.ConflictAction}

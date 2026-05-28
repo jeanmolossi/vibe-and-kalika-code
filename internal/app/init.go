@@ -37,7 +37,7 @@ func Init(projectRoot, src string, yes bool) (*InstallResult, int, error) {
 		return nil, ExitError, fmt.Errorf("platform selection: %w", err)
 	}
 	if len(selectedPlatforms) == 0 {
-		return nil, ExitUserCancelled, fmt.Errorf("no platforms selected — installation cancelled")
+		return nil, ExitUserCancelled, fmt.Errorf("no platforms selected — installation canceled")
 	}
 
 	// Step 5: ask for the package source.
@@ -46,7 +46,7 @@ func Init(projectRoot, src string, yes bool) (*InstallResult, int, error) {
 		return nil, ExitUserCancelled, err
 	}
 	if sourceInput.Source == "" {
-		return nil, ExitUserCancelled, fmt.Errorf("no source provided — installation cancelled")
+		return nil, ExitUserCancelled, fmt.Errorf("no source provided — installation canceled")
 	}
 
 	// Step 6: resolve (fetch) source.
@@ -54,7 +54,7 @@ func Init(projectRoot, src string, yes bool) (*InstallResult, int, error) {
 	if err != nil {
 		return nil, ExitSourceFetchError, fmt.Errorf("fetch source: %w", err)
 	}
-	defer resolved.Cleanup() //nolint:errcheck
+	defer resolved.Cleanup() //nolint:errcheck // temp directory cleanup error is non-actionable
 
 	// Step 7: parse manifest.
 	m, err := manifest.ParseFile(resolved.Root)
@@ -108,7 +108,7 @@ func Init(projectRoot, src string, yes bool) (*InstallResult, int, error) {
 		return nil, ExitError, fmt.Errorf("confirmation: %w", err)
 	}
 	if !confirmed {
-		return nil, ExitUserCancelled, fmt.Errorf("installation cancelled by user")
+		return nil, ExitUserCancelled, fmt.Errorf("installation canceled by user")
 	}
 
 	// Steps 14-17: install.

@@ -7,9 +7,9 @@ type cliError struct {
 	err  error
 }
 
-func (e cliError) Error() string    { return e.err.Error() }
-func (e cliError) Unwrap() error    { return e.err }
-func (e cliError) ExitCode() int    { return e.code }
+func (e cliError) Error() string { return e.err.Error() }
+func (e cliError) Unwrap() error { return e.err }
+func (e cliError) ExitCode() int { return e.code }
 
 func exitError(code int, err error) error { return cliError{code: code, err: fmt.Errorf("%w", err)} }
 

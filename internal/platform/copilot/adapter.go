@@ -27,7 +27,7 @@ func BasePath() string {
 func AgentTargetPath(name string) string { return filepath.Join(BasePath(), "agents", name+".md") }
 func SkillTargetPath(name string) string { return filepath.Join(BasePath(), "skills", name) }
 
-func (a *Adapter) Detect(projectRoot string) platform.DetectionResult {
+func (a *Adapter) Detect(_ string) platform.DetectionResult {
 	base := BasePath()
 	_, err := os.Stat(base)
 	return platform.DetectionResult{
@@ -39,7 +39,7 @@ func (a *Adapter) Detect(projectRoot string) platform.DetectionResult {
 	}
 }
 
-func (a *Adapter) AllowedRoots(projectRoot string) []string {
+func (a *Adapter) AllowedRoots(_ string) []string {
 	base := BasePath()
 	return []string{filepath.Join(base, "agents"), filepath.Join(base, "skills")}
 }
