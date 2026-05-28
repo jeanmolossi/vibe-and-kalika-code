@@ -108,6 +108,19 @@ func Install(opts InstallOptions) (*InstallResult, int, error) {
 		installRecord.Files = append(installRecord.Files, op.TargetPath)
 		if strings.HasSuffix(op.TargetPath, "AGENTS.md") {
 			installRecord.ManagedMarkers = append(installRecord.ManagedMarkers, op.TargetPath)
+			agentName := op.AgentName
+			if agentName == "" {
+				agentName = m.Name
+			}
+			installRecord.AgentBlocks = append(installRecord.AgentBlocks, state.AgentBlock{
+				Path:      op.TargetPath,
+				AgentName: agentName,
+			})
+		}
+	}
+	for _, op := range instResult.Applied {
+		if op.Type == platform.OperationCreate && !strings.HasSuffix(op.TargetPath, "AGENTS.md") {
+			installRecord.CreatedFiles = append(installRecord.CreatedFiles, op.TargetPath)
 		}
 	}
 	st.Installations = append(st.Installations, installRecord)
