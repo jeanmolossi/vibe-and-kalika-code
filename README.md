@@ -176,6 +176,32 @@ vkc update --self
 
 ---
 
+### `vkc uninstall <package>`
+
+Removes a previously installed package from the project.
+
+```bash
+vkc uninstall my-pack
+vkc uninstall my-pack --dry-run
+```
+
+What it does:
+
+- Removes files that were created during install (tracked as `created_files` in `.ai-setup/installed.yaml`).
+- Restores backup files, if a backup was made during install with `--conflict-action backup-and-overwrite`.
+- Removes managed VKC blocks from `AGENTS.md` files (blocks delimited by `<!-- BEGIN VKC AGENT: name -->` / `<!-- END VKC AGENT: name -->`).
+- Removes the installation record from `.ai-setup/installed.yaml`.
+
+**Flags:**
+
+| Flag | Default | Description |
+|---|---|---|
+| `--dry-run` | false | Show what would be removed without applying any changes |
+
+The package name must match the `name` field in the original `manifest.yaml` as recorded in state.
+
+---
+
 ## Package Format
 
 A `vkc`-installable package is a directory containing a `manifest.yaml` and source files for agents and skills.
@@ -283,7 +309,6 @@ See `examples/basic-pack/` for a minimal reference package.
 ## Known Limitations
 
 - Git sources require network connectivity.
-- `vkc uninstall` is not implemented. Installation state is tracked in `.ai-setup/installed.yaml` for future use.
 - Claude Code user scope (`~/.claude/`) is detected but not installed to by default.
 
 ---

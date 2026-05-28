@@ -44,3 +44,35 @@ func MergeAgentFile(targetPath, agentName, sourcePath, allowedRoot string) error
 	}
 	return os.WriteFile(targetPath, []byte(merged), 0o644)
 }
+
+// RemoveManagedBlock removes the managed block for agentName from the file at targetPath.
+// If the file does not exist or the block is not present, it returns nil (idempotent).
+// If allowedRoot is non-empty, the path is verified to be within that root before any I/O.
+func RemoveManagedBlock(targetPath, agentName, allowedRoot string) error {
+	if allowedRoot != "" {
+		if err := security.EnsureResolvedWithinRoot(allowedRoot, targetPath); err != nil {
+			return fmt.Errorf("block path escapes allowed root: %w", err)
+		}
+	}
+	data, err := os.ReadFile(targetPath) //#nosec G304 -- targetPath is validated by EnsureResolvedWithinRoot above
+	if os.IsNotExist(err) {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	pattern := regexp.MustCompile(`(?s)<!-- BEGIN VKC AGENT: ` + regexp.QuoteMeta(agentName) + ` -->.*?<!-- END VKC AGENT: ` + regexp.QuoteMeta(agentName) + ` -->\n?`)
+	if !pattern.MatchString(string(data)) {
+		return nil
+	}
+	removed := pattern.ReplaceAllString(string(data), "")
+	// Normalize: collapse more than one consecutive blank line into one
+	blankLines := regexp.MustCompile(`\n{3,}`)
+	normalized := blankLines.ReplaceAllString(removed, "\n\n")
+	// Ensure final newline
+	normalized = strings.TrimRight(normalized, "\n") + "\n"
+	if strings.TrimSpace(normalized) == "" {
+		return os.Remove(targetPath) //#nosec G703 -- targetPath validated by EnsureResolvedWithinRoot above
+	}
+	return os.WriteFile(targetPath, []byte(normalized), 0o644) //#nosec G304,G306,G703 -- targetPath validated above; 0o644 is intentional for team-readable config
+}
