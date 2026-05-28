@@ -10,6 +10,7 @@ import (
 
 	"github.com/jeanmolossi/vibe-and-kalika-code/internal/manifest"
 	"github.com/jeanmolossi/vibe-and-kalika-code/internal/platform"
+	"github.com/jeanmolossi/vibe-and-kalika-code/internal/source"
 )
 
 // InstallSummary holds data for ShowFinalSummary, avoiding an import of the app package.
@@ -57,7 +58,10 @@ func AskSource(assumeYes bool, defaultSrc string) (SourceInput, error) {
 	}
 
 	if nonInteractive {
-		return SourceInput{}, fmt.Errorf("source is required in non-interactive mode (pass it as an argument or use --yes with a source)")
+		return SourceInput{
+			SourceType: "git",
+			Source:     source.DefaultSource,
+		}, nil
 	}
 
 	// Step 1: pick type.

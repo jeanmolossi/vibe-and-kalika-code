@@ -7,6 +7,8 @@ import (
 	"strings"
 )
 
+const DefaultSource = "https://github.com/jeanmolossi/vibe-and-kalika-code/tree/main/packages/kalika-ofc"
+
 type ResolvedSource struct {
 	Root     string
 	Location string
