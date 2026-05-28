@@ -1,6 +1,6 @@
 module github.com/jeanmolossi/vibe-and-kalika-code
 
-go 1.23
+go 1.26
 
 require (
 	github.com/charmbracelet/huh v0.6.0
