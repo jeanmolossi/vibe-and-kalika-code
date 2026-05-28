@@ -3,6 +3,7 @@
 #
 # Usage:
 #   curl -sSfL https://github.com/jeanmolossi/vibe-and-kalika-code/releases/latest/download/install.sh | sh
+#   curl -sSfL https://github.com/jeanmolossi/vibe-and-kalika-code/releases/latest/download/install.sh | VERSION=1.2.3 sh
 #   VERSION=1.2.3 sh install.sh
 #
 # Environment variables:
@@ -34,8 +35,8 @@ else
   _RESET=''
 fi
 
-info()    { printf "${_BLUE}[info]${_RESET}  %s\n" "$*"; }
-success() { printf "${_GREEN}[ok]${_RESET}    %s\n" "$*"; }
+info()    { printf "${_BLUE}[info]${_RESET}  %s\n" "$*" >&2; }
+success() { printf "${_GREEN}[ok]${_RESET}    %s\n" "$*" >&2; }
 error()   { printf "${_RED}[error]${_RESET} %s\n" "$*" >&2; exit 1; }
 
 # ---------------------------------------------------------------------------
