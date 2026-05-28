@@ -1,0 +1,17 @@
+{
+  "name": "vibe-and-kalika-code-artifacts",
+  "version": "0.1.0",
+  "binary": "vkc",
+  "documents": [
+    "README.md",
+    "PRD.md",
+    "ARCHITECTURE.md",
+    "IMPLEMENTATION_PLAN.md",
+    "CLI_SPEC.md",
+    "MANIFEST_SPEC.md",
+    "FILE_MAPPING_SPEC.md",
+    "VALIDATION_AND_ACCEPTANCE.md",
+    "PROMPT_FOR_LLM_WORKER.md"
+  ],
+  "example_package": "examples/basic-pack"
+}
