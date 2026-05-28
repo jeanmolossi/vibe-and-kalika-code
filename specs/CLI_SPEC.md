@@ -24,6 +24,7 @@ vkc detect
 vkc install <source>
 vkc validate <source>
 vkc doctor
+vkc update
 ```
 
 ---
@@ -162,7 +163,31 @@ No filesystem mutation allowed, except maybe reading state.
 
 ---
 
-## 8. Terminal UX Rules
+## 8. `vkc update`
+
+Checks installed packages for newer versions and re-installs outdated ones.
+
+### Flags
+
+```bash
+vkc update              # re-install outdated packages
+vkc update --self       # update the vkc binary itself
+vkc update --dry-run    # show plan without applying changes (both modes)
+vkc update --yes        # skip confirmation prompts
+```
+
+### Self-update flow (`--self`)
+
+1. Fetch latest release metadata from GitHub.
+2. Download the release asset for the current OS/arch.
+3. Verify SHA256 checksum.
+4. Atomically replace running binary.
+
+No filesystem mutation without user confirmation unless `--yes` is set.
+
+---
+
+## 9. Terminal UX Rules
 
 The CLI should be:
 
@@ -177,7 +202,7 @@ No hidden writes before final confirmation.
 
 ---
 
-## 9. Exit Codes
+## 10. Exit Codes
 
 Suggested:
 
@@ -193,7 +218,7 @@ Suggested:
 
 ---
 
-## 10. Error Message Style
+## 11. Error Message Style
 
 Bad:
 
