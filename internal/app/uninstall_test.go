@@ -10,6 +10,8 @@ import (
 	"github.com/jeanmolossi/vibe-and-kalika-code/internal/state"
 )
 
+const testPkg = "pkg-a"
+
 func writeState(t *testing.T, root string, st *state.Store) {
 	t.Helper()
 	if err := state.Write(root, st); err != nil {
@@ -26,10 +28,10 @@ func TestUninstall(t *testing.T) {
 		}
 		writeState(t, root, &state.Store{
 			Installations: []state.Installation{
-				{Package: "pkg-a", CreatedFiles: []string{fpath}},
+				{Package: testPkg, CreatedFiles: []string{fpath}},
 			},
 		})
-		_, code, err := app.Uninstall(app.UninstallOptions{Package: "pkg-a", ProjectRoot: root})
+		_, code, err := app.Uninstall(app.UninstallOptions{Package: testPkg, ProjectRoot: root})
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -50,10 +52,10 @@ func TestUninstall(t *testing.T) {
 		}
 		writeState(t, root, &state.Store{
 			Installations: []state.Installation{
-				{Package: "pkg-a", BackupPath: backupDir, Files: []string{"original.md"}},
+				{Package: testPkg, BackupPath: backupDir, Files: []string{"original.md"}},
 			},
 		})
-		res, _, err := app.Uninstall(app.UninstallOptions{Package: "pkg-a", ProjectRoot: root})
+		res, _, err := app.Uninstall(app.UninstallOptions{Package: testPkg, ProjectRoot: root})
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -71,10 +73,10 @@ func TestUninstall(t *testing.T) {
 		}
 		writeState(t, root, &state.Store{
 			Installations: []state.Installation{
-				{Package: "pkg-a", AgentBlocks: []state.AgentBlock{{Path: agentsPath, AgentName: "agent-a"}}},
+				{Package: testPkg, AgentBlocks: []state.AgentBlock{{Path: agentsPath, AgentName: "agent-a"}}},
 			},
 		})
-		_, _, err := app.Uninstall(app.UninstallOptions{Package: "pkg-a", ProjectRoot: root})
+		_, _, err := app.Uninstall(app.UninstallOptions{Package: testPkg, ProjectRoot: root})
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -117,11 +119,11 @@ func TestUninstall(t *testing.T) {
 		root := t.TempDir()
 		writeState(t, root, &state.Store{
 			Installations: []state.Installation{
-				{Package: "pkg-a"},
+				{Package: testPkg},
 				{Package: "pkg-b"},
 			},
 		})
-		_, _, err := app.Uninstall(app.UninstallOptions{Package: "pkg-a", ProjectRoot: root})
+		_, _, err := app.Uninstall(app.UninstallOptions{Package: testPkg, ProjectRoot: root})
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -148,10 +150,10 @@ func TestUninstall(t *testing.T) {
 		missingFile := filepath.Join(root, "does-not-exist.md")
 		writeState(t, root, &state.Store{
 			Installations: []state.Installation{
-				{Package: "pkg-a", CreatedFiles: []string{missingFile}},
+				{Package: testPkg, CreatedFiles: []string{missingFile}},
 			},
 		})
-		_, _, err := app.Uninstall(app.UninstallOptions{Package: "pkg-a", ProjectRoot: root})
+		_, _, err := app.Uninstall(app.UninstallOptions{Package: testPkg, ProjectRoot: root})
 		if err != nil {
 			t.Fatalf("expected no error for absent file (idempotent), got: %v", err)
 		}

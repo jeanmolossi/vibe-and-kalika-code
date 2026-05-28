@@ -10,7 +10,7 @@ import (
 	"github.com/jeanmolossi/vibe-and-kalika-code/internal/state"
 )
 
-// UninstallOptions controls the behaviour of Uninstall.
+// UninstallOptions controls the behavior of Uninstall.
 type UninstallOptions struct {
 	Package     string
 	ProjectRoot string
