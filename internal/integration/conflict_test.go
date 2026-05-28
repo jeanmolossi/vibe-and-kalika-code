@@ -32,7 +32,7 @@ func TestConflictSkipAndBackupOverwrite(t *testing.T) {
 	if string(data) != "old" {
 		t.Fatalf("expected skip to preserve file, got %q", string(data))
 	}
-	res, code, err := app.Install(app.InstallOptions{Source: pkg, ProjectRoot: projectRoot, Targets: []platform.Platform{platform.PlatformCopilotCLI}, Yes: true, ConflictAction: "backup-and-overwrite"})
+	res, code, err := app.Install(app.InstallOptions{Source: pkg, ProjectRoot: projectRoot, Targets: []platform.Platform{platform.PlatformCopilotCLI}, Yes: true, ConflictAction: conflictActionBackupOverwrite})
 	if err != nil || code != app.ExitSuccess {
 		t.Fatalf("overwrite install err=%v code=%d", err, code)
 	}

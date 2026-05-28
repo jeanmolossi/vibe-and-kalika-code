@@ -14,7 +14,7 @@ func TestInstallLocalPackage(t *testing.T) {
 	copilotHome := filepath.Join(t.TempDir(), ".copilot")
 	t.Setenv("COPILOT_HOME", copilotHome)
 	pkg := filepath.Join("..", "..", "testdata", "packages", "valid-basic")
-	res, code, err := app.Install(app.InstallOptions{Source: pkg, ProjectRoot: projectRoot, Targets: []platform.Platform{platform.PlatformCopilotCLI}, Yes: true, ConflictAction: "backup-and-overwrite"})
+	res, code, err := app.Install(app.InstallOptions{Source: pkg, ProjectRoot: projectRoot, Targets: []platform.Platform{platform.PlatformCopilotCLI}, Yes: true, ConflictAction: conflictActionBackupOverwrite})
 	if err != nil || code != app.ExitSuccess {
 		t.Fatalf("Install() err=%v code=%d", err, code)
 	}

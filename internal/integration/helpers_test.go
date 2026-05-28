@@ -8,6 +8,8 @@ import (
 	"testing"
 )
 
+const conflictActionBackupOverwrite = "backup-and-overwrite"
+
 func copyDir(t *testing.T, src, dst string) {
 	t.Helper()
 	if err := filepath.WalkDir(src, func(path string, d fs.DirEntry, err error) error {
