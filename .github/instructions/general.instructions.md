@@ -19,3 +19,7 @@ Clarification format:
 2. Option 2
 3. Option 3
 4. Different answer (explain in detail)
+
+Whether a package is changed the manifest version should be updated. This is important for tracking changes and ensuring that the correct version of the package is being used.
+
+When updating the manifest version, please follow semantic versioning guidelines. This means that you should increment the major version for breaking changes, the minor version for new features, and the patch version for bug fixes.
