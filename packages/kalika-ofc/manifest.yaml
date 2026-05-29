@@ -10,17 +10,6 @@ targets:
   - codex-cli
 
 agents:
-  - name: kalika-judge
-    description: Use this agent when the user wants an independent surprise council judgment, adversarial audit, or post-workflow evaluation of multi-agent performance.
-    source: agents/kalika-judge.agent.md
-    targets:
-      copilot-cli:
-        scope: user
-      claude-code:
-        scope: project
-      codex-cli:
-        mode: agents-md-section
-
   - name: kalika-orchestrator
     description: Meta-orchestrator for multi-agent software workflows. Use for refinement, spike, validation, and development workflows that require routing, delegation, gates, and coordination.
     source: agents/kalika-orchestrator.agent.md
@@ -209,50 +198,6 @@ skills:
       codex-cli:
         scope: project
 
-  - name: council-evidence-index
-    description: Build the evidence foundation for a council judgment.
-    source: skills/council-evidence-index
-    targets:
-      copilot-cli:
-        scope: user
-      claude-code:
-        scope: project
-      codex-cli:
-        scope: project
-
-  - name: council-minutes
-    description: Create the official council minutes artifact.
-    source: skills/council-minutes
-    targets:
-      copilot-cli:
-        scope: user
-      claude-code:
-        scope: project
-      codex-cli:
-        scope: project
-
-  - name: council-scoring-verdict
-    description: Score every involved agent and produce the final verdict.
-    source: skills/council-scoring-verdict
-    targets:
-      copilot-cli:
-        scope: user
-      claude-code:
-        scope: project
-      codex-cli:
-        scope: project
-
-  - name: council-summons-testimony
-    description: Summon each workflow agent and force it to justify its performance.
-    source: skills/council-summons-testimony
-    targets:
-      copilot-cli:
-        scope: user
-      claude-code:
-        scope: project
-      codex-cli:
-        scope: project
-
   - name: documentation-audit
     description: Identify documentation that should be updated, created, or intentionally left unchanged based on the current task and patch.
     source: skills/documentation-audit
@@ -421,17 +366,6 @@ skills:
   - name: skill-generation
     description: Generate reusable Copilot skills from stable project knowledge.
     source: skills/skill-generation
-    targets:
-      copilot-cli:
-        scope: user
-      claude-code:
-        scope: project
-      codex-cli:
-        scope: project
-
-  - name: surprise-council-judgment
-    description: Run an independent surprise council judgment against an existing workflow.
-    source: skills/surprise-council-judgment
     targets:
       copilot-cli:
         scope: user
