@@ -1,17 +1,20 @@
 package cli
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"os"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/textinput"
+	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/spf13/cobra"
 
 	"github.com/jeanmolossi/vibe-and-kalika-code/internal/app"
+	"github.com/jeanmolossi/vibe-and-kalika-code/internal/state"
 	"github.com/jeanmolossi/vibe-and-kalika-code/internal/version"
 )
 
@@ -36,13 +39,41 @@ var replCommands = []replCommand{
 	{cmd: cmdQuit, hint: "Sai do REPL"},
 }
 
+// interactiveCommands lists subcommands that require direct TTY access (e.g. huh forms).
+// These are executed via tea.Exec so the terminal is temporarily handed over.
+var interactiveCommands = map[string]struct{}{
+	"install": {},
+	"init":    {},
+}
+
+// Layout constants.
 const (
-	maxSuggestions   = 6
-	defaultWidth     = 80
+	maxSuggestions = 6
+	defaultWidth   = 80
+	defaultHeight  = 24
+	// headerLines counts the lines rendered by renderHeader:
+	// 6 logo + 1 blank + 1 title + 1 subtitle + 1 divider = 10.
+	headerLines = 10
+	// inputAreaLines counts the lines in the input section:
+	// cwd + top-border + input + bottom-border + version = 5.
+	inputAreaLines   = 5
 	inputWidthOffset = 4
+	minViewportLines = 2
+	// inputAndVpCmdsCount is the fixed capacity for the sub-model command slice
+	// (text input + viewport = 2 commands per update cycle).
+	inputAndVpCmdsCount = 2
 )
 
-// Color tokens.
+// asciiLogo is the VKC banner displayed at the top of the fullscreen REPL.
+const asciiLogo = `
+██╗   ██╗██╗  ██╗ ██████╗
+██║   ██║██║ ██╔╝██╔════╝
+██║   ██║█████╔╝ ██║     
+╚██╗ ██╔╝██╔═██╗ ██║     
+ ╚████╔╝ ██║  ██╗╚██████╗
+  ╚═══╝  ╚═╝  ╚═╝ ╚═════╝`
+
+// Color palette.
 const (
 	colourCWD          = lipgloss.Color("33")
 	colourBorder       = lipgloss.Color("240")
@@ -50,6 +81,9 @@ const (
 	colourSelected     = lipgloss.Color("212")
 	colourVersionLabel = lipgloss.Color("245")
 	colourUpdate       = lipgloss.Color("208")
+	colourLogo         = lipgloss.Color("99")
+	colourTitle        = lipgloss.Color("212")
+	colourSubtitle     = lipgloss.Color("245")
 )
 
 var (
@@ -73,34 +107,59 @@ var (
 	updateNoticeStyle = lipgloss.NewStyle().
 				Foreground(colourUpdate).
 				Bold(true)
+
+	logoStyle = lipgloss.NewStyle().
+			Foreground(colourLogo).
+			Bold(true)
+
+	titleStyle = lipgloss.NewStyle().
+			Foreground(colourTitle).
+			Bold(true)
+
+	subtitleStyle = lipgloss.NewStyle().
+			Foreground(colourSubtitle)
 )
 
+// Message types ---------------------------------------------------------------
+
 // updateCheckMsg carries the result of the background update check.
-type updateCheckMsg struct {
-	notice string
+type updateCheckMsg struct{ notice string }
+
+// cmdDoneMsg carries the result of an interactive (tea.Exec) command.
+type cmdDoneMsg struct{ err error }
+
+// cmdOutputMsg carries the captured output of a non-interactive command.
+type cmdOutputMsg struct {
+	output string
+	err    error
 }
 
-// cmdDoneMsg carries the error (if any) returned by a REPL command execution.
-type cmdDoneMsg struct {
-	err error
-}
+// installedPackagesMsg carries the list of installed package names.
+type installedPackagesMsg struct{ packages []string }
 
-// replModel is the Bubble Tea model for the rich REPL UI.
+// replModel -------------------------------------------------------------------
+
+// replModel is the Bubble Tea model for the fullscreen REPL UI.
 type replModel struct {
-	input        textinput.Model
-	suggestions  []replCommand
-	selIdx       int
-	cwd          string
-	updateNotice string
-	width        int
-	baseFactory  func() *cobra.Command
-	quitting     bool
+	input             textinput.Model
+	vp                viewport.Model
+	suggestions       []replCommand
+	selIdx            int
+	cwd               string
+	updateNotice      string
+	width             int
+	height            int
+	baseFactory       func() *cobra.Command
+	quitting          bool
+	installedPackages []string
+	vpLines           []string
+	ready             bool
 }
 
-// newReplModel creates the initial REPL model.
+// newReplModel creates the initial REPL model with a welcome message pre-loaded.
 func newReplModel(baseFactory func() *cobra.Command, cwd string) replModel {
 	ti := textinput.New()
-	ti.Placeholder = "type a command, e.g. /help"
+	ti.Placeholder = "ex: /help, /install, /uninstall"
 	ti.Width = defaultWidth - inputWidthOffset
 	ti.CharLimit = 512
 	ti.Focus()
@@ -109,60 +168,132 @@ func newReplModel(baseFactory func() *cobra.Command, cwd string) replModel {
 		input:       ti,
 		cwd:         cwd,
 		baseFactory: baseFactory,
+		width:       defaultWidth,
+		height:      defaultHeight,
+		vpLines:     []string{"Bem-vindo ao vkc. Digite /help para ver os comandos disponíveis."},
 	}
 }
 
-// Init starts the blink ticker and launches the background update check.
+// Init launches background tasks: cursor blink, update check, package list.
 func (m replModel) Init() tea.Cmd {
 	return tea.Batch(
 		textinput.Blink,
 		fetchUpdateCheck(m.cwd),
-		tea.Println("Welcome to vkc interactive mode. Type /help for available commands."),
+		fetchInstalledPackages(),
 	)
 }
 
-// fetchUpdateCheck performs the update check in a background goroutine.
+// fetchUpdateCheck performs the CLI/package update check in a background goroutine.
 func fetchUpdateCheck(cwd string) tea.Cmd {
 	return func() tea.Msg {
 		result := app.CheckUpdates(cwd)
-		if result == nil || !result.CLIUpdateAvailable {
+		if result == nil {
 			return updateCheckMsg{}
 		}
-		return updateCheckMsg{
-			notice: fmt.Sprintf("New version %s available! Run /update --self", result.CLILatestVersion),
+		var parts []string
+		if result.CLIUpdateAvailable {
+			parts = append(parts, fmt.Sprintf("Nova versão %s disponível! Execute /update --self", result.CLILatestVersion))
 		}
+		for _, pkg := range result.PackageUpdates {
+			parts = append(parts, fmt.Sprintf("Pacote %s: %s → %s disponível", pkg.Name, pkg.CurrentVersion, pkg.LatestVersion))
+		}
+		return updateCheckMsg{notice: strings.Join(parts, " | ")}
 	}
 }
 
-// Update handles all incoming messages.
+// fetchInstalledPackages loads the installed package names from the local state file.
+func fetchInstalledPackages() tea.Cmd {
+	return func() tea.Msg {
+		st, err := state.Read()
+		if err != nil {
+			return installedPackagesMsg{}
+		}
+		names := make([]string, 0, len(st.Installations))
+		for _, inst := range st.Installations {
+			names = append(names, inst.Package)
+		}
+		return installedPackagesMsg{packages: names}
+	}
+}
+
+// execCaptured runs a non-interactive cobra command, capturing its output.
+func execCaptured(args []string, baseFactory func() *cobra.Command) tea.Cmd {
+	return func() tea.Msg {
+		var buf bytes.Buffer
+		root := baseFactory()
+		root.SetArgs(args)
+		root.SetOut(&buf)
+		root.SetErr(&buf)
+		root.SilenceErrors = true
+		root.SilenceUsage = true
+		err := root.Execute()
+		return cmdOutputMsg{output: buf.String(), err: err}
+	}
+}
+
+// Update ----------------------------------------------------------------------
+
+// Update handles all incoming Bubble Tea messages.
 func (m replModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
+		m.height = msg.Height
 		m.input.Width = msg.Width - inputWidthOffset
+		vpH := m.viewportHeight()
+		if !m.ready {
+			m.vp = viewport.New(msg.Width, vpH)
+			m.vp.SetContent(strings.Join(m.vpLines, "\n"))
+			m.vp.GotoBottom()
+			m.ready = true
+		} else {
+			m.vp.Width = msg.Width
+			m.vp.Height = vpH
+		}
 		return m, nil
 
 	case updateCheckMsg:
 		m.updateNotice = msg.notice
 		return m, nil
 
+	case installedPackagesMsg:
+		m.installedPackages = msg.packages
+		return m, nil
+
+	case cmdOutputMsg:
+		output := strings.TrimRight(msg.output, "\n")
+		if output != "" {
+			m = m.appendToViewport(output)
+		}
+		if msg.err != nil {
+			m = m.appendToViewport("erro: " + msg.err.Error())
+		}
+		return m, fetchInstalledPackages()
+
 	case cmdDoneMsg:
 		if msg.err != nil {
-			return m, tea.Println(fmt.Sprintf("error: %v", msg.err))
+			m = m.appendToViewport("erro: " + msg.err.Error())
 		}
-		return m, nil
+		return m, fetchInstalledPackages()
 
 	case tea.KeyMsg:
 		return m.handleKey(msg)
 	}
 
-	// Forward all other messages (e.g. blink timer) to the text input.
-	var cmd tea.Cmd
-	m.input, cmd = m.input.Update(msg)
-	return m, cmd
+	var cmds []tea.Cmd
+	cmds = make([]tea.Cmd, 0, inputAndVpCmdsCount)
+	var inputCmd tea.Cmd
+	m.input, inputCmd = m.input.Update(msg)
+	cmds = append(cmds, inputCmd)
+
+	var vpCmd tea.Cmd
+	m.vp, vpCmd = m.vp.Update(msg)
+	cmds = append(cmds, vpCmd)
+
+	return m, tea.Batch(cmds...)
 }
 
-// handleKey dispatches keyboard events for the REPL.
+// handleKey dispatches keyboard events.
 func (m replModel) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch msg.Type {
 	case tea.KeyCtrlC:
@@ -173,6 +304,7 @@ func (m replModel) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		if len(m.suggestions) > 0 {
 			m.suggestions = nil
 			m.selIdx = 0
+			m = m.syncViewportHeight()
 			return m, nil
 		}
 		m.quitting = true
@@ -186,12 +318,18 @@ func (m replModel) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			m.selIdx = (m.selIdx - 1 + len(m.suggestions)) % len(m.suggestions)
 			return m, nil
 		}
+		var cmd tea.Cmd
+		m.vp, cmd = m.vp.Update(msg)
+		return m, cmd
 
 	case tea.KeyDown:
 		if len(m.suggestions) > 0 {
 			m.selIdx = (m.selIdx + 1) % len(m.suggestions)
 			return m, nil
 		}
+		var cmd tea.Cmd
+		m.vp, cmd = m.vp.Update(msg)
+		return m, cmd
 
 	case tea.KeyTab:
 		if len(m.suggestions) > 0 {
@@ -210,16 +348,16 @@ func (m replModel) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		}
 
 	default:
-		// All other key types are forwarded to the text input below.
+		// All other keys are forwarded to the text input and suggestions are refreshed.
 	}
 
 	var cmd tea.Cmd
 	m.input, cmd = m.input.Update(msg)
-	m.refreshSuggestions()
+	m = m.refreshSuggestions()
 	return m, cmd
 }
 
-// handleEnter executes the current input or the highlighted suggestion.
+// handleEnter executes the current input or highlighted suggestion.
 func (m replModel) handleEnter() (tea.Model, tea.Cmd) {
 	line := strings.TrimSpace(m.input.Value())
 	if len(m.suggestions) > 0 {
@@ -229,6 +367,7 @@ func (m replModel) handleEnter() (tea.Model, tea.Cmd) {
 	m.input.SetValue("")
 	m.suggestions = nil
 	m.selIdx = 0
+	m = m.syncViewportHeight()
 
 	if line == "" {
 		return m, nil
@@ -239,27 +378,70 @@ func (m replModel) handleEnter() (tea.Model, tea.Cmd) {
 		m.quitting = true
 		return m, tea.Quit
 	case cmdHelp:
-		return m, tea.Println(replHelp)
+		m = m.appendToViewport(replHelp)
+		return m, nil
 	}
 
 	if !strings.HasPrefix(line, "/") {
-		return m, tea.Println("hint: commands start with /. Type /help for available commands.")
+		m = m.appendToViewport("dica: comandos começam com /. Digite /help para ver os disponíveis.")
+		return m, nil
 	}
 
 	args := strings.Fields(strings.TrimPrefix(line, "/"))
-	exec := &replExecCmd{args: args, baseFactory: m.baseFactory}
-	return m, tea.Exec(exec, func(err error) tea.Msg { return cmdDoneMsg{err: err} })
+	if len(args) == 0 {
+		return m, nil
+	}
+
+	m = m.appendToViewport("\n❯ " + line)
+
+	if _, isInteractive := interactiveCommands[args[0]]; isInteractive {
+		exec := &replExecCmd{args: args, baseFactory: m.baseFactory}
+		return m, tea.Exec(exec, func(err error) tea.Msg { return cmdDoneMsg{err: err} })
+	}
+
+	return m, execCaptured(args, m.baseFactory)
 }
 
-// refreshSuggestions updates the autocomplete list from the current input value.
-func (m *replModel) refreshSuggestions() {
-	m.suggestions = computeSuggestions(m.input.Value())
+// appendToViewport adds text to the scrollable history and scrolls to the bottom.
+func (m replModel) appendToViewport(s string) replModel {
+	m.vpLines = append(m.vpLines, strings.Split(s, "\n")...)
+	if m.ready {
+		m.vp.SetContent(strings.Join(m.vpLines, "\n"))
+		m.vp.GotoBottom()
+	}
+	return m
+}
+
+// refreshSuggestions recomputes the autocomplete list from the current input.
+func (m replModel) refreshSuggestions() replModel {
+	m.suggestions = computeSuggestions(m.input.Value(), m.installedPackages)
 	if m.selIdx >= len(m.suggestions) {
 		m.selIdx = 0
 	}
+	return m.syncViewportHeight()
 }
 
-// View renders the full REPL UI below any previous terminal output.
+// syncViewportHeight adjusts the viewport height based on current suggestion count.
+func (m replModel) syncViewportHeight() replModel {
+	if m.ready {
+		m.vp.Height = m.viewportHeight()
+	}
+	return m
+}
+
+// viewportHeight returns the number of lines available for the scrollable viewport.
+func (m replModel) viewportHeight() int {
+	suggCount := min(len(m.suggestions), maxSuggestions)
+	h := m.height - headerLines - 1 - suggCount - inputAreaLines
+	if h < minViewportLines {
+		return minViewportLines
+	}
+	return h
+}
+
+// View ------------------------------------------------------------------------
+
+// View renders the fullscreen REPL layout.
 func (m replModel) View() string {
 	if m.quitting {
 		return ""
@@ -272,7 +454,13 @@ func (m replModel) View() string {
 
 	var sb strings.Builder
 
-	// Autocomplete dropdown rendered above the input.
+	sb.WriteString(renderHeader(width))
+
+	if m.ready {
+		sb.WriteString(m.vp.View())
+		sb.WriteByte('\n')
+	}
+
 	if len(m.suggestions) > 0 {
 		limit := min(len(m.suggestions), maxSuggestions)
 		for i := range limit {
@@ -286,20 +474,12 @@ func (m replModel) View() string {
 		}
 	}
 
-	// Current working directory immediately above the input.
-	sb.WriteString(cwdStyle.Render(" "+m.cwd) + "\n")
-
-	// Horizontal rule acting as the top border of the input area.
 	border := borderLineStyle.Render(strings.Repeat("─", width))
+	sb.WriteString(cwdStyle.Render(" "+m.cwd) + "\n")
 	sb.WriteString(border + "\n")
-
-	// The text input itself.
 	sb.WriteString(" " + m.input.View() + "\n")
-
-	// Horizontal rule acting as the bottom border of the input area.
 	sb.WriteString(border + "\n")
 
-	// Version label and optional update notice below the input.
 	verLine := versionInfoStyle.Render("vkc " + version.Version)
 	if m.updateNotice != "" {
 		verLine += "  " + updateNoticeStyle.Render("⚠ "+m.updateNotice)
@@ -309,11 +489,54 @@ func (m replModel) View() string {
 	return sb.String()
 }
 
-// computeSuggestions returns all replCommands whose prefix matches the given input.
-func computeSuggestions(input string) []replCommand {
+// renderHeader renders the ASCII art banner and application description.
+// It outputs exactly headerLines (10) lines.
+func renderHeader(width int) string {
+	var sb strings.Builder
+
+	logoLines := strings.Split(strings.TrimPrefix(asciiLogo, "\n"), "\n")
+	for _, line := range logoLines {
+		sb.WriteString(logoStyle.Width(width).Align(lipgloss.Center).Render(line))
+		sb.WriteByte('\n')
+	}
+
+	sb.WriteByte('\n')
+
+	sb.WriteString(titleStyle.Width(width).Align(lipgloss.Center).Render("Vibe & Kalika Code"))
+	sb.WriteByte('\n')
+
+	sb.WriteString(subtitleStyle.Width(width).Align(lipgloss.Center).Render("Gerenciador de ambientes de desenvolvimento com IA"))
+	sb.WriteByte('\n')
+
+	sb.WriteString(borderLineStyle.Render(strings.Repeat("─", width)))
+	sb.WriteByte('\n')
+
+	return sb.String()
+}
+
+// computeSuggestions returns matching commands or argument completions for the given input.
+// When the input starts with "/uninstall " it matches installed package names.
+func computeSuggestions(input string, installed []string) []replCommand {
 	if input == "" {
 		return nil
 	}
+
+	// Argument completion for /uninstall <package>.
+	if rest, ok := strings.CutPrefix(input, "/uninstall "); ok {
+		lower := strings.ToLower(rest)
+		matches := make([]replCommand, 0, len(installed))
+		for _, pkg := range installed {
+			if strings.HasPrefix(strings.ToLower(pkg), lower) {
+				matches = append(matches, replCommand{
+					cmd:  "/uninstall " + pkg,
+					hint: "pacote instalado",
+				})
+			}
+		}
+		return matches
+	}
+
+	// Command-level prefix completion.
 	lower := strings.ToLower(input)
 	matches := make([]replCommand, 0, len(replCommands))
 	for _, c := range replCommands {
@@ -324,8 +547,8 @@ func computeSuggestions(input string) []replCommand {
 	return matches
 }
 
-// replExecCmd implements tea.ExecCommand so that cobra sub-commands run with full
-// terminal control, including nested Bubble Tea programs such as huh forms.
+// replExecCmd implements tea.ExecCommand for interactive cobra subcommands
+// that require direct terminal access (e.g. huh forms).
 type replExecCmd struct {
 	args        []string
 	baseFactory func() *cobra.Command
@@ -338,7 +561,7 @@ func (e *replExecCmd) SetStdin(r io.Reader)  { e.stdin = r }
 func (e *replExecCmd) SetStdout(w io.Writer) { e.stdout = w }
 func (e *replExecCmd) SetStderr(w io.Writer) { e.stderr = w }
 
-// Run builds and executes the cobra sub-command with the terminal handed over.
+// Run builds and executes the cobra subcommand with the terminal handed over.
 func (e *replExecCmd) Run() error {
 	stdin := e.stdin
 	if stdin == nil {
