@@ -42,8 +42,9 @@ var replCommands = []replCommand{
 // interactiveCommands lists subcommands that require direct TTY access (e.g. huh forms).
 // These are executed via tea.Exec so the terminal is temporarily handed over.
 var interactiveCommands = map[string]struct{}{
-	"install": {},
-	"init":    {},
+	"install":   {},
+	"init":      {},
+	"uninstall": {}, // may show a huh confirmation form for outside-root files
 }
 
 // Layout constants.
