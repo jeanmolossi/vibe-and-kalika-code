@@ -9,7 +9,7 @@ import (
 
 	"github.com/jeanmolossi/vibe-and-kalika-code/internal/app"
 	"github.com/jeanmolossi/vibe-and-kalika-code/internal/platform"
-	"github.com/jeanmolossi/vibe-and-kalika-code/internal/source"
+	"github.com/jeanmolossi/vibe-and-kalika-code/internal/ui"
 )
 
 func newInstallCmd() *cobra.Command {
@@ -21,9 +21,16 @@ func newInstallCmd() *cobra.Command {
 		Args:  cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			projectRoot, _ := os.Getwd()
-			src := source.DefaultSource
+			src := ""
 			if len(args) > 0 {
 				src = args[0]
+			}
+			if src == "" {
+				sourceInput, err := ui.AskSource(yes, "")
+				if err != nil {
+					return exitError(app.ExitUserCancelled, err)
+				}
+				src = sourceInput.Source
 			}
 			res, code, err := app.Install(app.InstallOptions{Source: src, ProjectRoot: projectRoot, Targets: parseTargets(targetsCSV), Yes: yes, DryRun: dryRun, ConflictAction: conflictAction})
 			if err != nil {
