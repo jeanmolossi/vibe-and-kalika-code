@@ -28,7 +28,7 @@ type UninstallResult struct {
 
 // Uninstall removes an installed package from the project.
 func Uninstall(opts UninstallOptions) (*UninstallResult, int, error) {
-	st, err := state.Read(opts.ProjectRoot)
+	st, err := state.Read()
 	if err != nil {
 		return nil, ExitError, err
 	}
@@ -109,7 +109,7 @@ func Uninstall(opts UninstallOptions) (*UninstallResult, int, error) {
 
 	// Remove installation record
 	st.Installations = append(st.Installations[:recIdx], st.Installations[recIdx+1:]...)
-	if err := state.Write(opts.ProjectRoot, st); err != nil {
+	if err := state.Write(st); err != nil {
 		return nil, ExitError, err
 	}
 

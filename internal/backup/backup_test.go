@@ -9,16 +9,16 @@ import (
 )
 
 func TestBackupCreatedAndReportWritten(t *testing.T) {
-	projectRoot := t.TempDir()
-	source := filepath.Join(projectRoot, "file.txt")
+	baseDir := t.TempDir()
+	source := filepath.Join(baseDir, "file.txt")
 	if err := os.WriteFile(source, []byte("hello"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	res, err := backup.Create(projectRoot)
+	res, err := backup.Create(baseDir)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := backup.CopyInto(res, projectRoot, source); err != nil {
+	if err := backup.CopyInto(res, baseDir, source); err != nil {
 		t.Fatal(err)
 	}
 	if err := backup.WriteReport(res); err != nil {

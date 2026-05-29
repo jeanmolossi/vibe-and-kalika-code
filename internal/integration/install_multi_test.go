@@ -13,6 +13,7 @@ import (
 // TestInstallCopilotAndClaude verifies that a package can be installed into
 // both Copilot CLI and Claude Code simultaneously.
 func TestInstallCopilotAndClaude(t *testing.T) {
+	t.Setenv("VKC_STATE_DIR", t.TempDir())
 	projectRoot := t.TempDir()
 	copilotHome := filepath.Join(t.TempDir(), ".copilot")
 	t.Setenv("COPILOT_HOME", copilotHome)
@@ -56,6 +57,7 @@ func TestInstallCopilotAndClaude(t *testing.T) {
 // agent appends a managed block to an existing AGENTS.md without destroying
 // pre-existing content.
 func TestInstallCodexAgentIntoExistingAgentsMD(t *testing.T) {
+	t.Setenv("VKC_STATE_DIR", t.TempDir())
 	projectRoot := t.TempDir()
 
 	// Create pre-existing AGENTS.md

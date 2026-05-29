@@ -77,17 +77,16 @@ func Install(opts InstallOptions) (*InstallResult, int, error) {
 		return nil, ExitError, err
 	}
 	reportPath, err := report.WriteInstallReport(report.InstallReportInput{
-		ProjectRoot: opts.ProjectRoot,
-		Manifest:    m,
-		Source:      opts.Source,
-		Platforms:   targets,
-		Operations:  instResult.Applied,
-		Backup:      instResult.Backup,
+		Manifest:   m,
+		Source:     opts.Source,
+		Platforms:  targets,
+		Operations: instResult.Applied,
+		Backup:     instResult.Backup,
 	})
 	if err != nil {
 		return nil, ExitError, err
 	}
-	st, err := state.Read(opts.ProjectRoot)
+	st, err := state.Read()
 	if err != nil {
 		return nil, ExitError, err
 	}
@@ -124,7 +123,7 @@ func Install(opts InstallOptions) (*InstallResult, int, error) {
 		}
 	}
 	st.Installations = append(st.Installations, installRecord)
-	if err := state.Write(opts.ProjectRoot, st); err != nil {
+	if err := state.Write(st); err != nil {
 		return nil, ExitError, err
 	}
 	result := &InstallResult{Manifest: m, Plan: plan, ReportPath: reportPath}

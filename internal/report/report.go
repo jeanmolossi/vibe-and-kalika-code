@@ -9,19 +9,24 @@ import (
 	"github.com/jeanmolossi/vibe-and-kalika-code/internal/backup"
 	"github.com/jeanmolossi/vibe-and-kalika-code/internal/manifest"
 	"github.com/jeanmolossi/vibe-and-kalika-code/internal/platform"
+	"github.com/jeanmolossi/vibe-and-kalika-code/internal/state"
 )
 
 type InstallReportInput struct {
-	ProjectRoot string
-	Manifest    *manifest.Manifest
-	Source      string
-	Platforms   []platform.Platform
-	Operations  []platform.PlannedOperation
-	Backup      *backup.Result
+	// ProjectRoot is no longer used; reports are written to the global state directory.
+	Manifest   *manifest.Manifest
+	Source     string
+	Platforms  []platform.Platform
+	Operations []platform.PlannedOperation
+	Backup     *backup.Result
 }
 
 func WriteInstallReport(input InstallReportInput) (string, error) {
-	dir := filepath.Join(input.ProjectRoot, ".ai-setup", "reports")
+	stateDir, err := state.StateDir()
+	if err != nil {
+		return "", err
+	}
+	dir := filepath.Join(stateDir, "reports")
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return "", err
 	}
