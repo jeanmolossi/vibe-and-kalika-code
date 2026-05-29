@@ -14,6 +14,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/jeanmolossi/vibe-and-kalika-code/internal/app"
+	"github.com/jeanmolossi/vibe-and-kalika-code/internal/security"
 	"github.com/jeanmolossi/vibe-and-kalika-code/internal/state"
 	"github.com/jeanmolossi/vibe-and-kalika-code/internal/version"
 )
@@ -42,9 +43,8 @@ var replCommands = []replCommand{
 // interactiveCommands lists subcommands that require direct TTY access (e.g. huh forms).
 // These are executed via tea.Exec so the terminal is temporarily handed over.
 var interactiveCommands = map[string]struct{}{
-	"install":   {},
-	"init":      {},
-	"uninstall": {}, // may show a huh confirmation form for outside-root files
+	"install": {},
+	"init":    {},
 }
 
 // Layout constants.
@@ -395,12 +395,82 @@ func (m replModel) handleEnter() (tea.Model, tea.Cmd) {
 
 	m = m.appendToViewport("\n❯ " + line)
 
+	if args[0] == "uninstall" {
+		return m.handleUninstall(args)
+	}
+
 	if _, isInteractive := interactiveCommands[args[0]]; isInteractive {
 		exec := &replExecCmd{args: args, baseFactory: m.baseFactory}
 		return m, tea.Exec(exec, func(err error) tea.Msg { return cmdDoneMsg{err: err} })
 	}
 
 	return m, execCaptured(args, m.baseFactory)
+}
+
+// handleUninstall routes uninstall to tea.Exec (with real TTY) only when the
+// package has outside-root files that require interactive confirmation. In the
+// common case the command runs via execCaptured so output is visible in the
+// viewport.
+func (m replModel) handleUninstall(args []string) (tea.Model, tea.Cmd) {
+	var pkgName string
+	hasForce := false
+
+	for _, a := range args[1:] {
+		switch a {
+		case "--force", "-f":
+			hasForce = true
+		default:
+			if !strings.HasPrefix(a, "-") && pkgName == "" {
+				pkgName = a
+			}
+		}
+	}
+
+	// --force flag or dry-run: no confirmation dialog → output goes to viewport.
+	if hasForce || pkgName == "" {
+		return m, execCaptured(args, m.baseFactory)
+	}
+
+	// Pre-flight check: does this package have files outside the project root?
+	// If yes, the uninstall command will show an interactive huh confirmation,
+	// so we need tea.Exec (real TTY). Otherwise execCaptured is sufficient.
+	projectRoot, err := os.Getwd()
+	if err == nil && uninstallNeedsConfirm(pkgName, projectRoot) {
+		exec := &replExecCmd{args: args, baseFactory: m.baseFactory}
+		return m, tea.Exec(exec, func(err error) tea.Msg { return cmdDoneMsg{err: err} })
+	}
+
+	return m, execCaptured(args, m.baseFactory)
+}
+
+// uninstallNeedsConfirm reports whether the given package has at least one
+// managed block or created file outside projectRoot. If so the CLI will ask for
+// interactive confirmation, which requires a real TTY.
+func uninstallNeedsConfirm(pkgName, projectRoot string) bool {
+	st, err := state.Read()
+	if err != nil {
+		return false
+	}
+
+	for _, inst := range st.Installations {
+		if inst.Package != pkgName {
+			continue
+		}
+
+		for _, block := range inst.AgentBlocks {
+			if security.EnsureWithinRoot(projectRoot, block.Path) != nil {
+				return true
+			}
+		}
+
+		for _, f := range inst.CreatedFiles {
+			if security.EnsureWithinRoot(projectRoot, f) != nil {
+				return true
+			}
+		}
+	}
+
+	return false
 }
 
 // appendToViewport adds text to the scrollable history and scrolls to the bottom.
