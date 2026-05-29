@@ -86,15 +86,24 @@ func AskSource(assumeYes bool, defaultSrc string) (SourceInput, error) {
 	if sourceType == sourceTypeGit {
 		placeholder = "https://github.com/user/repo"
 	}
+
 	var sourcePath string
-	form2 := huh.NewForm(huh.NewGroup(
-		huh.NewInput().
-			Title("Source path or URL").
-			Placeholder(placeholder).
-			Value(&sourcePath),
-	))
-	if err := form2.Run(); err != nil {
-		return SourceInput{}, err
+	if sourceType != sourceTypeGit {
+		var pathErr error
+		sourcePath, pathErr = RunPathInput("Source path or URL", placeholder)
+		if pathErr != nil {
+			return SourceInput{}, pathErr
+		}
+	} else {
+		form2 := huh.NewForm(huh.NewGroup(
+			huh.NewInput().
+				Title("Source path or URL").
+				Placeholder(placeholder).
+				Value(&sourcePath),
+		))
+		if err := form2.Run(); err != nil {
+			return SourceInput{}, err
+		}
 	}
 
 	sourcePath = strings.TrimSpace(sourcePath)
@@ -273,4 +282,47 @@ func platformDisplayName(p platform.Platform) string {
 	default:
 		return string(p)
 	}
+}
+
+// pathSuggestions returns directory entries that match the given prefix for
+// path autocompletion in the local source input.
+//
+// It preserves the exact prefix format typed by the user so that textinput's
+// HasPrefix filter matches correctly (e.g. "./f" yields "./foo", not "foo").
+func pathSuggestions(prefix string) []string {
+	if prefix == "" {
+		return nil
+	}
+
+	var dir, partial string
+	i := strings.LastIndex(prefix, "/")
+	if i < 0 {
+		dir = "."
+		partial = prefix
+	} else {
+		dir = prefix[:i+1]
+		partial = prefix[i+1:]
+	}
+
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return nil
+	}
+
+	suggestions := make([]string, 0, len(entries))
+	for _, e := range entries {
+		if !e.IsDir() {
+			continue
+		}
+		name := e.Name()
+		if partial != "" && !strings.HasPrefix(name, partial) {
+			continue
+		}
+		if dir == "." {
+			suggestions = append(suggestions, name)
+		} else {
+			suggestions = append(suggestions, dir+name)
+		}
+	}
+	return suggestions
 }
