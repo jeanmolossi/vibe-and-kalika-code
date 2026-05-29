@@ -3,7 +3,6 @@ package ui
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/charmbracelet/huh"
@@ -284,22 +283,22 @@ func platformDisplayName(p platform.Platform) string {
 
 // pathSuggestions returns directory entries that match the given prefix for
 // path autocompletion in the local source input.
+//
+// It preserves the exact prefix format typed by the user so that textinput's
+// HasPrefix filter matches correctly (e.g. "./f" yields "./foo", not "foo").
 func pathSuggestions(prefix string) []string {
-	var dir, partial string
+	if prefix == "" {
+		return nil
+	}
 
-	switch {
-	case prefix == "":
+	var dir, partial string
+	i := strings.LastIndex(prefix, "/")
+	if i < 0 {
 		dir = "."
-		partial = ""
-	case strings.HasSuffix(prefix, "/") || strings.HasSuffix(prefix, string(filepath.Separator)):
-		dir = prefix
-		partial = ""
-	default:
-		dir = filepath.Dir(prefix)
-		partial = filepath.Base(prefix)
-		if partial == "." {
-			partial = ""
-		}
+		partial = prefix
+	} else {
+		dir = prefix[:i+1]
+		partial = prefix[i+1:]
 	}
 
 	entries, err := os.ReadDir(dir)
@@ -316,7 +315,11 @@ func pathSuggestions(prefix string) []string {
 		if partial != "" && !strings.HasPrefix(name, partial) {
 			continue
 		}
-		suggestions = append(suggestions, filepath.Join(dir, name))
+		if dir == "." {
+			suggestions = append(suggestions, name)
+		} else {
+			suggestions = append(suggestions, dir+name)
+		}
 	}
 	return suggestions
 }
