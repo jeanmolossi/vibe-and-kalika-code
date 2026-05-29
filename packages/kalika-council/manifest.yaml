@@ -1,0 +1,78 @@
+name: kalika-council
+version: 0.1.0
+description: Kalika council pack — agent and skills for independent multi-agent judgment workflows
+author: Jean Molossi
+license: MIT
+
+targets:
+  - copilot-cli
+  - claude-code
+  - codex-cli
+
+agents:
+  - name: kalika-judge
+    description: Use this agent when the user wants an independent surprise council judgment, adversarial audit, or post-workflow evaluation of multi-agent performance.
+    source: agents/kalika-judge.agent.md
+    targets:
+      copilot-cli:
+        scope: user
+      claude-code:
+        scope: project
+      codex-cli:
+        mode: agents-md-section
+
+skills:
+  - name: council-evidence-index
+    description: Build the evidence foundation for a council judgment.
+    source: skills/council-evidence-index
+    targets:
+      copilot-cli:
+        scope: user
+      claude-code:
+        scope: project
+      codex-cli:
+        scope: project
+
+  - name: council-minutes
+    description: Create the official council minutes artifact.
+    source: skills/council-minutes
+    targets:
+      copilot-cli:
+        scope: user
+      claude-code:
+        scope: project
+      codex-cli:
+        scope: project
+
+  - name: council-scoring-verdict
+    description: Score every involved agent and produce the final verdict.
+    source: skills/council-scoring-verdict
+    targets:
+      copilot-cli:
+        scope: user
+      claude-code:
+        scope: project
+      codex-cli:
+        scope: project
+
+  - name: council-summons-testimony
+    description: Summon each workflow agent and force it to justify its performance.
+    source: skills/council-summons-testimony
+    targets:
+      copilot-cli:
+        scope: user
+      claude-code:
+        scope: project
+      codex-cli:
+        scope: project
+
+  - name: surprise-council-judgment
+    description: Run an independent surprise council judgment against an existing workflow.
+    source: skills/surprise-council-judgment
+    targets:
+      copilot-cli:
+        scope: user
+      claude-code:
+        scope: project
+      codex-cli:
+        scope: project
