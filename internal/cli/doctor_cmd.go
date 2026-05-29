@@ -65,7 +65,7 @@ func newDoctorCmd() *cobra.Command {
 
 			fmt.Fprintf(out, "  %s installation state readable\n", doctorCheck(res.StateValid))
 			if !res.StateValid {
-				fmt.Fprintln(out, doctorInfo.Render("      .ai-setup/installed.yaml is missing or corrupt — run vkc install first"))
+				fmt.Fprintln(out, doctorInfo.Render("      ~/.ai-setup/installed.yaml is missing or corrupt — run vkc install first"))
 			}
 
 			fmt.Fprintln(out, doctorInfo.Render("\nPlatform status:"))

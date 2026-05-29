@@ -12,21 +12,22 @@ import (
 
 const testPkg = "pkg-a"
 
-func writeState(t *testing.T, root string, st *state.Store) {
+func writeState(t *testing.T, st *state.Store) {
 	t.Helper()
-	if err := state.Write(root, st); err != nil {
+	if err := state.Write(st); err != nil {
 		t.Fatalf("write state: %v", err)
 	}
 }
 
 func TestUninstall(t *testing.T) {
 	t.Run("created_files_deleted", func(t *testing.T) {
+		t.Setenv("VKC_STATE_DIR", t.TempDir())
 		root := t.TempDir()
 		fpath := filepath.Join(root, "somefile.md")
 		if err := os.WriteFile(fpath, []byte("content"), 0o644); err != nil {
 			t.Fatal(err)
 		}
-		writeState(t, root, &state.Store{
+		writeState(t, &state.Store{
 			Installations: []state.Installation{
 				{Package: testPkg, CreatedFiles: []string{fpath}},
 			},
@@ -44,13 +45,14 @@ func TestUninstall(t *testing.T) {
 	})
 
 	t.Run("backup_restored", func(t *testing.T) {
+		t.Setenv("VKC_STATE_DIR", t.TempDir())
 		root := t.TempDir()
 		backupDir := t.TempDir()
 		originalFile := filepath.Join(backupDir, "original.md")
 		if err := os.WriteFile(originalFile, []byte("original content"), 0o644); err != nil {
 			t.Fatal(err)
 		}
-		writeState(t, root, &state.Store{
+		writeState(t, &state.Store{
 			Installations: []state.Installation{
 				{Package: testPkg, BackupPath: backupDir, Files: []string{"original.md"}},
 			},
@@ -65,13 +67,14 @@ func TestUninstall(t *testing.T) {
 	})
 
 	t.Run("managed_block_removed", func(t *testing.T) {
+		t.Setenv("VKC_STATE_DIR", t.TempDir())
 		root := t.TempDir()
 		agentsPath := filepath.Join(root, "AGENTS.md")
 		content := "<!-- BEGIN VKC AGENT: agent-a -->\n## Agent: agent-a\n\nhello\n<!-- END VKC AGENT: agent-a -->\n"
 		if err := os.WriteFile(agentsPath, []byte(content), 0o644); err != nil {
 			t.Fatal(err)
 		}
-		writeState(t, root, &state.Store{
+		writeState(t, &state.Store{
 			Installations: []state.Installation{
 				{Package: testPkg, AgentBlocks: []state.AgentBlock{{Path: agentsPath, AgentName: "agent-a"}}},
 			},
@@ -87,6 +90,7 @@ func TestUninstall(t *testing.T) {
 	})
 
 	t.Run("agent_name_used_not_package_name", func(t *testing.T) {
+		t.Setenv("VKC_STATE_DIR", t.TempDir())
 		root := t.TempDir()
 		agentsPath := filepath.Join(root, "AGENTS.md")
 		// agent name differs from package name
@@ -94,7 +98,7 @@ func TestUninstall(t *testing.T) {
 		if err := os.WriteFile(agentsPath, []byte(content), 0o644); err != nil {
 			t.Fatal(err)
 		}
-		writeState(t, root, &state.Store{
+		writeState(t, &state.Store{
 			Installations: []state.Installation{
 				{
 					Package:     "basic-kalika-pack",
@@ -116,8 +120,9 @@ func TestUninstall(t *testing.T) {
 	})
 
 	t.Run("state_record_removed", func(t *testing.T) {
+		t.Setenv("VKC_STATE_DIR", t.TempDir())
 		root := t.TempDir()
-		writeState(t, root, &state.Store{
+		writeState(t, &state.Store{
 			Installations: []state.Installation{
 				{Package: testPkg},
 				{Package: "pkg-b"},
@@ -127,15 +132,16 @@ func TestUninstall(t *testing.T) {
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
-		st, _ := state.Read(root)
+		st, _ := state.Read()
 		if len(st.Installations) != 1 || st.Installations[0].Package != "pkg-b" {
 			t.Fatalf("expected only pkg-b to remain, got: %+v", st.Installations)
 		}
 	})
 
 	t.Run("package_not_found", func(t *testing.T) {
+		t.Setenv("VKC_STATE_DIR", t.TempDir())
 		root := t.TempDir()
-		writeState(t, root, &state.Store{})
+		writeState(t, &state.Store{})
 		_, _, err := app.Uninstall(app.UninstallOptions{Package: "nonexistent", ProjectRoot: root})
 		if err == nil {
 			t.Fatal("expected error for missing package")
@@ -146,9 +152,10 @@ func TestUninstall(t *testing.T) {
 	})
 
 	t.Run("already_absent_created_file", func(t *testing.T) {
+		t.Setenv("VKC_STATE_DIR", t.TempDir())
 		root := t.TempDir()
 		missingFile := filepath.Join(root, "does-not-exist.md")
-		writeState(t, root, &state.Store{
+		writeState(t, &state.Store{
 			Installations: []state.Installation{
 				{Package: testPkg, CreatedFiles: []string{missingFile}},
 			},

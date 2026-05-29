@@ -10,6 +10,7 @@ import (
 )
 
 func TestConflictSkipAndBackupOverwrite(t *testing.T) {
+	t.Setenv("VKC_STATE_DIR", t.TempDir())
 	projectRoot := t.TempDir()
 	copilotHome := filepath.Join(t.TempDir(), ".copilot")
 	t.Setenv("COPILOT_HOME", copilotHome)

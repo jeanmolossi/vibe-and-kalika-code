@@ -19,6 +19,7 @@ func TestInstallGitPackage(t *testing.T) {
 	runGit(t, repo, "config", "user.name", "Test")
 	runGit(t, repo, "add", ".")
 	runGit(t, repo, "commit", "-m", "init")
+	t.Setenv("VKC_STATE_DIR", t.TempDir())
 	projectRoot := t.TempDir()
 	copilotHome := filepath.Join(t.TempDir(), ".copilot")
 	t.Setenv("COPILOT_HOME", copilotHome)

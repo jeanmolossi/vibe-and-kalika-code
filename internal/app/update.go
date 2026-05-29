@@ -80,7 +80,7 @@ var defaultHTTPClient httpDoer = &http.Client{Timeout: httpClientTimeout}
 
 // Update checks each installed package for a newer version and re-installs outdated ones.
 func Update(opts UpdateOptions) (*UpdateResult, int, error) {
-	st, err := state.Read(opts.ProjectRoot)
+	st, err := state.Read()
 	if err != nil {
 		return nil, ExitError, fmt.Errorf("read state: %w", err)
 	}

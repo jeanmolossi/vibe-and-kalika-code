@@ -12,6 +12,7 @@ import (
 	"github.com/jeanmolossi/vibe-and-kalika-code/internal/manifest"
 	"github.com/jeanmolossi/vibe-and-kalika-code/internal/platform"
 	"github.com/jeanmolossi/vibe-and-kalika-code/internal/security"
+	"github.com/jeanmolossi/vibe-and-kalika-code/internal/state"
 )
 
 type Result struct {
@@ -28,11 +29,15 @@ func Apply(projectRoot string, m *manifest.Manifest, operations []platform.Plann
 		}
 	}
 	var backupResult *backup.Result
-	var err error
 	if needBackup {
-		backupResult, err = backup.Create(projectRoot)
+		baseDir, err := state.StateDir()
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("resolve state directory: %w", err)
+		}
+		var createErr error
+		backupResult, createErr = backup.Create(baseDir)
+		if createErr != nil {
+			return nil, createErr
 		}
 	}
 	result := &Result{Backup: backupResult}

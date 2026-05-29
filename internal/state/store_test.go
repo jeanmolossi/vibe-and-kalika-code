@@ -7,12 +7,12 @@ import (
 )
 
 func TestStateWriteAndRead(t *testing.T) {
-	projectRoot := t.TempDir()
+	t.Setenv("VKC_STATE_DIR", t.TempDir())
 	store := &state.Store{Installations: []state.Installation{{Package: "pack", Version: "1.0.0"}}}
-	if err := state.Write(projectRoot, store); err != nil {
+	if err := state.Write(store); err != nil {
 		t.Fatal(err)
 	}
-	got, err := state.Read(projectRoot)
+	got, err := state.Read()
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -9,6 +9,8 @@ import (
 
 	git "github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
+
+	"github.com/jeanmolossi/vibe-and-kalika-code/internal/state"
 )
 
 // ParseGitHubTreeURL parses a GitHub tree URL into its components.
@@ -50,7 +52,11 @@ func ParseGitHubTreeURL(rawURL string) (cloneURL, branch, subdir string, ok bool
 }
 
 func CloneGitSource(source, projectRoot string) (*ResolvedSource, error) {
-	cloneBase := filepath.Join(projectRoot, ".ai-setup", "sources")
+	stateDir, err := state.StateDir()
+	if err != nil {
+		return nil, fmt.Errorf("resolve state directory: %w", err)
+	}
+	cloneBase := filepath.Join(stateDir, "sources")
 	if err := os.MkdirAll(cloneBase, 0o755); err != nil {
 		return nil, fmt.Errorf("create clone base: %w", err)
 	}
