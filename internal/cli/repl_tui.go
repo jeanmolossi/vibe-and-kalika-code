@@ -42,9 +42,9 @@ var replCommands = []replCommand{
 
 // interactiveCommands lists subcommands that require direct TTY access (e.g. huh forms).
 // These are executed via tea.Exec so the terminal is temporarily handed over.
+// "install" is intentionally absent: routing is handled by handleInstall.
 var interactiveCommands = map[string]struct{}{
-	"install": {},
-	"init":    {},
+	"init": {},
 }
 
 // Layout constants.
@@ -454,6 +454,10 @@ func (m replModel) handleEnter() (tea.Model, tea.Cmd) {
 		return m.handleUninstall(args)
 	}
 
+	if args[0] == "install" {
+		return m.handleInstall(args)
+	}
+
 	if _, isInteractive := interactiveCommands[args[0]]; isInteractive {
 		exec := &replExecCmd{args: args, baseFactory: m.baseFactory}
 		return m, tea.Exec(exec, func(err error) tea.Msg { return cmdDoneMsg{err: err} })
@@ -496,6 +500,36 @@ func (m replModel) handleUninstall(args []string) (tea.Model, tea.Cmd) {
 	}
 
 	return m, execCaptured(args, m.baseFactory)
+}
+
+// handleInstall routes install to execCaptured when a source argument is
+// provided or when --yes is set (both cases are non-interactive). When the user
+// types /install without a source and without --yes, the install command will
+// invoke ui.AskSource which requires a real TTY, so tea.Exec is used instead.
+func (m replModel) handleInstall(args []string) (tea.Model, tea.Cmd) {
+	hasYes := false
+	hasSource := false
+
+	for _, a := range args[1:] {
+		switch a {
+		case "--yes", "-y":
+			hasYes = true
+		default:
+			if !strings.HasPrefix(a, "-") {
+				hasSource = true
+			}
+		}
+	}
+
+	// Source provided, or --yes flag present: AskSource is skipped or
+	// non-interactive → output can be captured and shown in the viewport.
+	if hasSource || hasYes {
+		return m, execCaptured(args, m.baseFactory)
+	}
+
+	// No source, no --yes: the command will prompt interactively.
+	exec := &replExecCmd{args: args, baseFactory: m.baseFactory}
+	return m, tea.Exec(exec, func(err error) tea.Msg { return cmdDoneMsg{err: err} })
 }
 
 // uninstallNeedsConfirm reports whether the given package has at least one
