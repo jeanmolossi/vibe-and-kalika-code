@@ -15,19 +15,25 @@ import (
 	"github.com/jeanmolossi/vibe-and-kalika-code/internal/version"
 )
 
+// replCommand pairs a slash-command with a short hint shown in the autocomplete dropdown.
+type replCommand struct {
+	cmd  string
+	hint string
+}
+
 // replCommands is the ordered list of all REPL slash-commands used for autocomplete.
-var replCommands = []string{
-	"/detect",
-	"/doctor",
-	cmdHelp,
-	"/init",
-	"/install",
-	"/uninstall",
-	"/update",
-	"/update --self",
-	"/validate",
-	cmdExit,
-	cmdQuit,
+var replCommands = []replCommand{
+	{cmd: "/detect", hint: "Detecta plataformas disponíveis no projeto"},
+	{cmd: "/doctor", hint: "Executa verificações de saúde do ambiente"},
+	{cmd: cmdHelp, hint: "Lista os comandos disponíveis"},
+	{cmd: "/init", hint: "Inicializa um novo pacote interativamente"},
+	{cmd: "/install", hint: "Instala um pacote a partir de um diretório local ou URL git"},
+	{cmd: "/uninstall", hint: "Remove um pacote instalado anteriormente"},
+	{cmd: "/update", hint: "Atualiza pacotes instalados"},
+	{cmd: "/update --self", hint: "Atualiza o próprio CLI"},
+	{cmd: "/validate", hint: "Valida um pacote"},
+	{cmd: cmdExit, hint: "Sai do REPL"},
+	{cmd: cmdQuit, hint: "Sai do REPL"},
 }
 
 const (
@@ -82,7 +88,7 @@ type cmdDoneMsg struct {
 // replModel is the Bubble Tea model for the rich REPL UI.
 type replModel struct {
 	input        textinput.Model
-	suggestions  []string
+	suggestions  []replCommand
 	selIdx       int
 	cwd          string
 	updateNotice string
@@ -190,7 +196,7 @@ func (m replModel) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case tea.KeyTab:
 		if len(m.suggestions) > 0 {
 			m.selIdx = (m.selIdx + 1) % len(m.suggestions)
-			m.input.SetValue(m.suggestions[m.selIdx])
+			m.input.SetValue(m.suggestions[m.selIdx].cmd)
 			m.input.CursorEnd()
 			return m, nil
 		}
@@ -198,7 +204,7 @@ func (m replModel) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case tea.KeyShiftTab:
 		if len(m.suggestions) > 0 {
 			m.selIdx = (m.selIdx - 1 + len(m.suggestions)) % len(m.suggestions)
-			m.input.SetValue(m.suggestions[m.selIdx])
+			m.input.SetValue(m.suggestions[m.selIdx].cmd)
 			m.input.CursorEnd()
 			return m, nil
 		}
@@ -217,7 +223,7 @@ func (m replModel) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 func (m replModel) handleEnter() (tea.Model, tea.Cmd) {
 	line := strings.TrimSpace(m.input.Value())
 	if len(m.suggestions) > 0 {
-		line = m.suggestions[m.selIdx]
+		line = m.suggestions[m.selIdx].cmd
 	}
 
 	m.input.SetValue("")
@@ -271,10 +277,11 @@ func (m replModel) View() string {
 		limit := min(len(m.suggestions), maxSuggestions)
 		for i := range limit {
 			s := m.suggestions[i]
+			label := s.cmd + "  — " + s.hint
 			if i == m.selIdx {
-				sb.WriteString(suggestionSelectedStyle.Render("▶ "+s) + "\n")
+				sb.WriteString(suggestionSelectedStyle.Render("▶ "+label) + "\n")
 			} else {
-				sb.WriteString(suggestionNormalStyle.Render("  "+s) + "\n")
+				sb.WriteString(suggestionNormalStyle.Render("  "+label) + "\n")
 			}
 		}
 	}
@@ -303,14 +310,14 @@ func (m replModel) View() string {
 }
 
 // computeSuggestions returns all replCommands whose prefix matches the given input.
-func computeSuggestions(input string) []string {
+func computeSuggestions(input string) []replCommand {
 	if input == "" {
 		return nil
 	}
 	lower := strings.ToLower(input)
-	matches := make([]string, 0, len(replCommands))
+	matches := make([]replCommand, 0, len(replCommands))
 	for _, c := range replCommands {
-		if strings.HasPrefix(strings.ToLower(c), lower) && c != input {
+		if strings.HasPrefix(strings.ToLower(c.cmd), lower) && c.cmd != input {
 			matches = append(matches, c)
 		}
 	}

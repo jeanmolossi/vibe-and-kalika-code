@@ -18,17 +18,17 @@ const (
 	cmdHelp = "/help"
 )
 
-const replHelp = `Available commands:
-  /detect        — detect platforms
-  /doctor        — run health checks
-  /help          — list available commands
-  /init          — interactive init
-  /install       — install a package
-  /uninstall     — uninstall a package
-  /update        — update packages
-  /update --self — update the CLI itself
-  /validate      — validate a package
-  /exit, /quit   — exit the REPL`
+const replHelp = `Comandos disponíveis:
+  /detect        — Detecta plataformas disponíveis no projeto
+  /doctor        — Executa verificações de saúde do ambiente
+  /help          — Lista os comandos disponíveis
+  /init          — Inicializa um novo pacote interativamente
+  /install       — Instala um pacote a partir de um diretório local ou URL git
+  /uninstall     — Remove um pacote instalado anteriormente
+  /update        — Atualiza pacotes instalados
+  /update --self — Atualiza o próprio CLI
+  /validate      — Valida um pacote
+  /exit, /quit   — Sai do REPL`
 
 // readLine reads exactly one newline-terminated line from r, one byte at a time.
 // This avoids buffering stdin ahead of subcommands that also need to read from it.
