@@ -3,6 +3,7 @@ package ui
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/charmbracelet/huh"
@@ -87,12 +88,18 @@ func AskSource(assumeYes bool, defaultSrc string) (SourceInput, error) {
 		placeholder = "https://github.com/user/repo"
 	}
 	var sourcePath string
-	form2 := huh.NewForm(huh.NewGroup(
-		huh.NewInput().
-			Title("Source path or URL").
-			Placeholder(placeholder).
-			Value(&sourcePath),
-	))
+	pathInput := huh.NewInput().
+		Title("Source path or URL").
+		Placeholder(placeholder).
+		Value(&sourcePath)
+
+	if sourceType != sourceTypeGit {
+		pathInput = pathInput.SuggestionsFunc(func() []string {
+			return pathSuggestions(sourcePath)
+		}, &sourcePath)
+	}
+
+	form2 := huh.NewForm(huh.NewGroup(pathInput))
 	if err := form2.Run(); err != nil {
 		return SourceInput{}, err
 	}
@@ -273,4 +280,43 @@ func platformDisplayName(p platform.Platform) string {
 	default:
 		return string(p)
 	}
+}
+
+// pathSuggestions returns directory entries that match the given prefix for
+// path autocompletion in the local source input.
+func pathSuggestions(prefix string) []string {
+	var dir, partial string
+
+	switch {
+	case prefix == "":
+		dir = "."
+		partial = ""
+	case strings.HasSuffix(prefix, "/") || strings.HasSuffix(prefix, string(filepath.Separator)):
+		dir = prefix
+		partial = ""
+	default:
+		dir = filepath.Dir(prefix)
+		partial = filepath.Base(prefix)
+		if partial == "." {
+			partial = ""
+		}
+	}
+
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return nil
+	}
+
+	suggestions := make([]string, 0, len(entries))
+	for _, e := range entries {
+		if !e.IsDir() {
+			continue
+		}
+		name := e.Name()
+		if partial != "" && !strings.HasPrefix(name, partial) {
+			continue
+		}
+		suggestions = append(suggestions, filepath.Join(dir, name))
+	}
+	return suggestions
 }
