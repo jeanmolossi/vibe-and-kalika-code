@@ -86,21 +86,24 @@ func AskSource(assumeYes bool, defaultSrc string) (SourceInput, error) {
 	if sourceType == sourceTypeGit {
 		placeholder = "https://github.com/user/repo"
 	}
+
 	var sourcePath string
-	pathInput := huh.NewInput().
-		Title("Source path or URL").
-		Placeholder(placeholder).
-		Value(&sourcePath)
-
 	if sourceType != sourceTypeGit {
-		pathInput = pathInput.SuggestionsFunc(func() []string {
-			return pathSuggestions(sourcePath)
-		}, &sourcePath)
-	}
-
-	form2 := huh.NewForm(huh.NewGroup(pathInput))
-	if err := form2.Run(); err != nil {
-		return SourceInput{}, err
+		var pathErr error
+		sourcePath, pathErr = RunPathInput("Source path or URL", placeholder)
+		if pathErr != nil {
+			return SourceInput{}, pathErr
+		}
+	} else {
+		form2 := huh.NewForm(huh.NewGroup(
+			huh.NewInput().
+				Title("Source path or URL").
+				Placeholder(placeholder).
+				Value(&sourcePath),
+		))
+		if err := form2.Run(); err != nil {
+			return SourceInput{}, err
+		}
 	}
 
 	sourcePath = strings.TrimSpace(sourcePath)
