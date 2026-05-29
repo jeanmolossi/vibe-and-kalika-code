@@ -6,8 +6,16 @@ import (
 	"os"
 	"strings"
 
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/mattn/go-isatty"
 	"github.com/spf13/cobra"
+)
+
+// REPL command constants used across repl.go and repl_tui.go.
+const (
+	cmdExit = "/exit"
+	cmdQuit = "/quit"
+	cmdHelp = "/help"
 )
 
 const replHelp = `Available commands:
@@ -44,15 +52,32 @@ func readLine(r io.Reader) (string, error) {
 	}
 }
 
+// runREPL starts the interactive REPL. When stdin is a TTY it launches the rich
+// Bubble Tea UI; otherwise it falls back to a plain line-based loop.
 func runREPL(baseFactory func() *cobra.Command, out io.Writer) {
+	if !isatty.IsTerminal(os.Stdin.Fd()) {
+		runReplBasic(baseFactory, out)
+		return
+	}
+
+	cwd, err := os.Getwd()
+	if err != nil {
+		cwd = "."
+	}
+
+	m := newReplModel(baseFactory, cwd)
+	p := tea.NewProgram(m)
+	if _, err := p.Run(); err != nil {
+		fmt.Fprintf(os.Stderr, "error: %v\n", err)
+	}
+}
+
+// runReplBasic is the plain line-based fallback used when stdin is not a TTY.
+func runReplBasic(baseFactory func() *cobra.Command, out io.Writer) {
 	fmt.Fprintln(out, "Welcome to vkc interactive mode. Type /help for available commands.")
 
-	isTTY := isatty.IsTerminal(os.Stdin.Fd())
-
 	for {
-		if isTTY {
-			fmt.Fprint(out, "> ")
-		}
+		fmt.Fprint(out, "> ")
 
 		line, err := readLine(os.Stdin)
 		if err != nil {
@@ -65,9 +90,9 @@ func runREPL(baseFactory func() *cobra.Command, out io.Writer) {
 		}
 
 		switch line {
-		case "/exit", "/quit":
+		case cmdExit, cmdQuit:
 			return
-		case "/help":
+		case cmdHelp:
 			fmt.Fprintln(out, replHelp)
 			continue
 		}

@@ -1,6 +1,7 @@
 ---
 name: go-reversible-install-state
-description: Use this skill when a Go CLI must record install-time state so a future uninstall command can fully reverse the installation. Call it before implementing the state struct, the install recorder, or the uninstall executor. It prevents the three most common uninstall bugs: wrong block-removal key, accidental shared-file deletion, and non-retryable cleanup ordering.
+description: >
+Use this skill when a Go CLI must record install-time state so a future uninstall command can fully reverse the installation. Call it before implementing the state struct, the install recorder, or the uninstall executor. It prevents the three most common uninstall bugs: wrong block-removal key, accidental shared-file deletion, and non-retryable cleanup ordering.
 ---
 
 # Go Reversible Install State
@@ -15,7 +16,7 @@ idempotently, and without corrupting other packages' content.
 Three design rules prevent the most common uninstall bugs:
 
 1. **Block identity ≠ artifact identity** — the key used to locate and remove a
-   managed block (the *agent name*) is not the same as the package name.
+   managed block (the _agent name_) is not the same as the package name.
 2. **Shared files are never in `CreatedFiles`** — files that use managed-block
    merge must be removed via `RemoveManagedBlock`, not `os.Remove`.
 3. **State is written last** — cleanup side effects run before the state record
@@ -170,9 +171,11 @@ operation skip AND the output message.
 # Reversible Install State Result
 
 ## Status
+
 PASS | BLOCKED | NOT_APPLICABLE
 
 ## Findings
+
 - AgentBlock struct separates path from agent name: yes/no
 - Shared config file absent from CreatedFiles: yes/no
 - State write is the last step in uninstall: yes/no
@@ -180,6 +183,7 @@ PASS | BLOCKED | NOT_APPLICABLE
 - Dry-run output branches on flag: yes/no
 
 ## Next step
+
 - Wire AgentBlock recording into the install recorder
 - Add the agent_name_used_not_package_name sub-test to uninstall_test.go
 ```
