@@ -159,6 +159,9 @@ linters:
       - path: cmd/
         linters:
           - gochecknoinits
+      - linters:
+          - misspell
+        text: "Comandos|comandos"
     paths:
       - testdata
       - vendor
