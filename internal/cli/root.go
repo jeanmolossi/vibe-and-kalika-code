@@ -21,6 +21,12 @@ func NewRootCmd() *cobra.Command {
 	cmd := newBaseRootCmd()
 
 	cmd.PersistentPreRunE = func(cmd *cobra.Command, _ []string) error {
+		// Skip update checks during shell completion to avoid slow network
+		// calls that break autocomplete response times.
+		if cmd.Name() == cobra.ShellCompRequestCmd || cmd.Name() == cobra.ShellCompNoDescRequestCmd {
+			return nil
+		}
+
 		cwd, err := os.Getwd()
 		if err != nil {
 			cwd = ""

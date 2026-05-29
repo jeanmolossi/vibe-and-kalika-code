@@ -155,6 +155,60 @@ verify_checksum() {
 }
 
 # ---------------------------------------------------------------------------
+# Install shell completions automatically
+# ---------------------------------------------------------------------------
+install_completions() {
+  # Resolve the installed binary path for generating completions.
+  if command -v vkc >/dev/null 2>&1; then
+    _vkc_bin="vkc"
+  elif [ -x "/usr/local/bin/${BINARY_NAME}" ]; then
+    _vkc_bin="/usr/local/bin/${BINARY_NAME}"
+  elif [ -x "${HOME}/.local/bin/${BINARY_NAME}" ]; then
+    _vkc_bin="${HOME}/.local/bin/${BINARY_NAME}"
+  else
+    info "Could not locate ${BINARY_NAME} binary to generate completions. Skipping."
+    return
+  fi
+
+  _shell="${SHELL##*/}"
+
+  case "${_shell}" in
+    bash)
+      _bash_comp_dir="${HOME}/.local/share/bash-completion/completions"
+      mkdir -p "${_bash_comp_dir}"
+      "${_vkc_bin}" completion bash > "${_bash_comp_dir}/${BINARY_NAME}" 2>/dev/null && \
+        success "Bash completion installed to ${_bash_comp_dir}/${BINARY_NAME}" || \
+        info "Could not install bash completion."
+      ;;
+    zsh)
+      _zsh_comp_dir="${HOME}/.zsh/completions"
+      mkdir -p "${_zsh_comp_dir}"
+      "${_vkc_bin}" completion zsh > "${_zsh_comp_dir}/_${BINARY_NAME}" 2>/dev/null && \
+        success "Zsh completion installed to ${_zsh_comp_dir}/_${BINARY_NAME}" || \
+        info "Could not install zsh completion."
+
+      # Ensure the completion dir is in fpath and compinit is called.
+      _zshrc="${ZDOTDIR:-${HOME}}/.zshrc"
+      if [ -f "${_zshrc}" ] && ! grep -q "/.zsh/completions" "${_zshrc}" 2>/dev/null; then
+        printf '\n# vkc shell completions\nfpath=(%s $fpath)\nautoload -Uz compinit && compinit\n' "${_zsh_comp_dir}" >> "${_zshrc}"
+        info "Added fpath entry to ${_zshrc}. Restart your shell or run: source ${_zshrc}"
+      fi
+      ;;
+    fish)
+      _fish_comp_dir="${HOME}/.config/fish/completions"
+      mkdir -p "${_fish_comp_dir}"
+      "${_vkc_bin}" completion fish > "${_fish_comp_dir}/${BINARY_NAME}.fish" 2>/dev/null && \
+        success "Fish completion installed to ${_fish_comp_dir}/${BINARY_NAME}.fish" || \
+        info "Could not install fish completion."
+      ;;
+    *)
+      info "Shell '${_shell}' not recognised. Skipping automatic completion install."
+      info "To enable completions manually, run: ${_vkc_bin} completion <shell>"
+      ;;
+  esac
+}
+
+# ---------------------------------------------------------------------------
 # Install binary (try /usr/local/bin, fall back to ~/.local/bin)
 # ---------------------------------------------------------------------------
 install_binary() {
@@ -245,6 +299,9 @@ main() {
 
   # Install
   install_binary "${TMP_DIR}/${BINARY_NAME}"
+
+  # Register shell completions automatically
+  install_completions
 
   success "Done! Run '${BINARY_NAME} --help' to get started."
 }
