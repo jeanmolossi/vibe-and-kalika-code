@@ -17,7 +17,7 @@ The agent MUST NOT read, cat, print, summarize, or load the full memory file.
 Default memory file:
 
 ```txt
-~/.copilot/memory/MEMORY.md
+~/.vkc/memory/MEMORY.md
 ```
 
 Memory format:
@@ -54,7 +54,7 @@ Use this skill before:
 ## Hard Rules
 
 - NEVER load the entire memory file into the agent context.
-- NEVER run `cat ~/.copilot/memory/MEMORY.md`.
+- NEVER run `cat ~/.vkc/memory/MEMORY.md`.
 - NEVER ask another agent to read the full memory dump.
 - ALWAYS retrieve memories through `./scripts/select-memory.sh`.
 - Only use returned memory blocks.
@@ -98,7 +98,7 @@ Use:
 
 ```bash
 bash ./scripts/select-memory.sh \
-  --file ~/.copilot/memory/MEMORY.md \
+  --file ~/.vkc/memory/MEMORY.md \
   --query "<task-specific keywords>" \
   --tags "<optional,tags,comma,separated>" \
   --limit 5 \
@@ -109,7 +109,7 @@ Example:
 
 ```bash
 bash ./scripts/select-memory.sh \
-  --file ~/.copilot/memory/MEMORY.md \
+  --file ~/.vkc/memory/MEMORY.md \
   --query "golang mysql 5.7 database/sql query review performance" \
   --tags "go,mysql,mysql57,backend,review" \
   --limit 5 \
@@ -136,7 +136,7 @@ Example:
 
 ```bash
 bash ./scripts/select-memory.sh \
-  --file ~/.copilot/memory/MEMORY.md \
+  --file ~/.vkc/memory/MEMORY.md \
   --query "golang backend review" \
   --tags "go,backend" \
   --limit 3 \
@@ -228,9 +228,9 @@ Bad memory candidates:
 Use UTC timestamp.
 
 ```bash
-mkdir -p ~/.copilot/memory
+mkdir -p ~/.vkc/memory
 
-cat >> ~/.copilot/memory/MEMORY.md <<'EOF_MEMORY'
+cat >> ~/.vkc/memory/MEMORY.md <<'EOF_MEMORY'
 
 ## <timestamp>
 Contexto: <when/how this memory should be used>
@@ -243,9 +243,9 @@ EOF_MEMORY
 Example:
 
 ```bash
-mkdir -p ~/.copilot/memory
+mkdir -p ~/.vkc/memory
 
-cat >> ~/.copilot/memory/MEMORY.md <<EOF_MEMORY
+cat >> ~/.vkc/memory/MEMORY.md <<EOF_MEMORY
 
 ## $(date -u '+%Y-%m-%dT%H:%M:%SZ')
 Contexto: Use when generating or reviewing GitHub Copilot multi-agent workflow files.
