@@ -8,10 +8,11 @@ import (
 
 	"github.com/jeanmolossi/vibe-and-kalika-code/internal/app"
 	"github.com/jeanmolossi/vibe-and-kalika-code/internal/state"
+	"github.com/jeanmolossi/vibe-and-kalika-code/internal/ui"
 )
 
 func newUninstallCmd() *cobra.Command {
-	var dryRun bool
+	var dryRun, force bool
 	cmd := &cobra.Command{
 		Use:               "uninstall <package>",
 		Short:             "Uninstall a previously installed package",
@@ -26,11 +27,38 @@ func newUninstallCmd() *cobra.Command {
 				Package:     args[0],
 				ProjectRoot: projectRoot,
 				DryRun:      dryRun,
+				Force:       force,
 			})
 			if err != nil {
 				return exitError(code, err)
 			}
+
 			out := cmd.OutOrStdout()
+
+			// Interactively ask about items outside the project root that were skipped.
+			if !dryRun && !force && len(res.FilesSkipped) > 0 {
+				fmt.Fprintf(out, "\n⚠  %d item(s) fora do diretório do projeto foram ignorados:\n", len(res.FilesSkipped))
+				for _, item := range res.FilesSkipped {
+					if item.AgentName != "" {
+						fmt.Fprintf(out, "   - %s (bloco de agente: %s)\n", item.Path, item.AgentName)
+					} else {
+						fmt.Fprintf(out, "   - %s\n", item.Path)
+					}
+				}
+				confirmed, cerr := ui.Confirm("Deseja remover esses arquivos também?", false)
+				if cerr != nil {
+					return fmt.Errorf("confirmação: %w", cerr)
+				}
+				if confirmed {
+					extraFiles, extraMarkers, rerr := app.RemoveSkippedItems(res.FilesSkipped)
+					if rerr != nil {
+						fmt.Fprintf(cmd.ErrOrStderr(), "aviso: remoção parcial: %v\n", rerr)
+					}
+					res.FilesRemoved = append(res.FilesRemoved, extraFiles...)
+					res.MarkersRemoved = append(res.MarkersRemoved, extraMarkers...)
+				}
+			}
+
 			if dryRun {
 				fmt.Fprintf(out, "Would uninstall %s (dry-run)\n", res.Package)
 			} else {
@@ -43,6 +71,7 @@ func newUninstallCmd() *cobra.Command {
 		},
 	}
 	cmd.Flags().BoolVar(&dryRun, "dry-run", false, "Show what would be uninstalled without applying")
+	cmd.Flags().BoolVar(&force, "force", false, "Remove files outside the project root without prompting")
 	return cmd
 }
 

@@ -12,6 +12,11 @@ import (
 
 const testPkg = "pkg-a"
 
+const (
+	testExtAgentName  = "ext-agent"
+	testExtAgentBlock = "<!-- BEGIN VKC AGENT: ext-agent -->\ncontent\n<!-- END VKC AGENT: ext-agent -->\n"
+)
+
 func writeState(t *testing.T, st *state.Store) {
 	t.Helper()
 	if err := state.Write(st); err != nil {
@@ -163,6 +168,87 @@ func TestUninstall(t *testing.T) {
 		_, _, err := app.Uninstall(app.UninstallOptions{Package: testPkg, ProjectRoot: root})
 		if err != nil {
 			t.Fatalf("expected no error for absent file (idempotent), got: %v", err)
+		}
+	})
+
+	t.Run("outside_root_skipped_without_force", func(t *testing.T) {
+		t.Setenv("VKC_STATE_DIR", t.TempDir())
+		root := t.TempDir()
+		// File lives in a separate temp dir (outside root).
+		outsideDir := t.TempDir()
+		outsideFile := filepath.Join(outsideDir, "AGENTS.md")
+		if err := os.WriteFile(outsideFile, []byte(testExtAgentBlock), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		writeState(t, &state.Store{
+			Installations: []state.Installation{
+				{Package: testPkg, AgentBlocks: []state.AgentBlock{{Path: outsideFile, AgentName: testExtAgentName}}},
+			},
+		})
+		res, _, err := app.Uninstall(app.UninstallOptions{Package: testPkg, ProjectRoot: root})
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if len(res.FilesSkipped) == 0 {
+			t.Fatal("expected outside-root block to appear in FilesSkipped")
+		}
+		if res.FilesSkipped[0].AgentName != testExtAgentName {
+			t.Fatalf("expected agent name %s, got %q", testExtAgentName, res.FilesSkipped[0].AgentName)
+		}
+		// File should NOT have been modified.
+		got, _ := os.ReadFile(outsideFile)
+		if !strings.Contains(string(got), "BEGIN VKC AGENT: "+testExtAgentName) {
+			t.Fatal("outside-root block should not be removed when Force is false")
+		}
+	})
+
+	t.Run("outside_root_removed_with_force", func(t *testing.T) {
+		t.Setenv("VKC_STATE_DIR", t.TempDir())
+		root := t.TempDir()
+		outsideDir := t.TempDir()
+		outsideFile := filepath.Join(outsideDir, "AGENTS.md")
+		if err := os.WriteFile(outsideFile, []byte(testExtAgentBlock), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		writeState(t, &state.Store{
+			Installations: []state.Installation{
+				{Package: testPkg, AgentBlocks: []state.AgentBlock{{Path: outsideFile, AgentName: testExtAgentName}}},
+			},
+		})
+		res, _, err := app.Uninstall(app.UninstallOptions{Package: testPkg, ProjectRoot: root, Force: true})
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if len(res.FilesSkipped) != 0 {
+			t.Fatal("expected no skipped items when Force is true")
+		}
+		if len(res.MarkersRemoved) == 0 {
+			t.Fatal("expected block to be removed when Force is true")
+		}
+		got, _ := os.ReadFile(outsideFile)
+		if strings.Contains(string(got), "BEGIN VKC AGENT: "+testExtAgentName) {
+			t.Fatalf("block should be removed with Force=true, got:\n%s", got)
+		}
+	})
+
+	t.Run("remove_skipped_items", func(t *testing.T) {
+		t.Setenv("VKC_STATE_DIR", t.TempDir())
+		outsideDir := t.TempDir()
+		outsideFile := filepath.Join(outsideDir, "AGENTS.md")
+		if err := os.WriteFile(outsideFile, []byte(testExtAgentBlock), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		items := []app.SkippedItem{{Path: outsideFile, AgentName: testExtAgentName}}
+		_, markers, err := app.RemoveSkippedItems(items)
+		if err != nil {
+			t.Fatalf("RemoveSkippedItems error: %v", err)
+		}
+		if len(markers) == 0 {
+			t.Fatal("expected marker to be reported as removed")
+		}
+		got, _ := os.ReadFile(outsideFile)
+		if strings.Contains(string(got), "BEGIN VKC AGENT: ext-agent") {
+			t.Fatalf("block should be removed by RemoveSkippedItems, got:\n%s", got)
 		}
 	})
 }

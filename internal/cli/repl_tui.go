@@ -496,16 +496,20 @@ func renderHeader(width int) string {
 
 	logoLines := strings.Split(strings.TrimPrefix(asciiLogo, "\n"), "\n")
 	for _, line := range logoLines {
-		sb.WriteString(logoStyle.Width(width).Align(lipgloss.Center).Render(line))
+		// Trim trailing spaces so lipgloss.PlaceHorizontal measures only printable content.
+		centered := lipgloss.PlaceHorizontal(width, lipgloss.Center, strings.TrimRight(line, " "))
+		sb.WriteString(logoStyle.Render(centered))
 		sb.WriteByte('\n')
 	}
 
 	sb.WriteByte('\n')
 
-	sb.WriteString(titleStyle.Width(width).Align(lipgloss.Center).Render("Vibe & Kalika Code"))
+	title := lipgloss.PlaceHorizontal(width, lipgloss.Center, "Vibe & Kalika Code")
+	sb.WriteString(titleStyle.Render(title))
 	sb.WriteByte('\n')
 
-	sb.WriteString(subtitleStyle.Width(width).Align(lipgloss.Center).Render("Gerenciador de ambientes de desenvolvimento com IA"))
+	subtitle := lipgloss.PlaceHorizontal(width, lipgloss.Center, "Gerenciador de ambientes de desenvolvimento com IA")
+	sb.WriteString(subtitleStyle.Render(subtitle))
 	sb.WriteByte('\n')
 
 	sb.WriteString(borderLineStyle.Render(strings.Repeat("─", width)))
