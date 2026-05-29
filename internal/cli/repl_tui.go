@@ -138,6 +138,9 @@ type cmdOutputMsg struct {
 // installedPackagesMsg carries the list of installed package names.
 type installedPackagesMsg struct{ packages []string }
 
+// installSummaryMsg carries the full installation list for the post-command summary.
+type installSummaryMsg struct{ installations []state.Installation }
+
 // replModel -------------------------------------------------------------------
 
 // replModel is the Bubble Tea model for the fullscreen REPL UI.
@@ -155,6 +158,7 @@ type replModel struct {
 	installedPackages []string
 	vpLines           []string
 	ready             bool
+	pendingSummary    bool
 }
 
 // newReplModel creates the initial REPL model with a welcome message pre-loaded.
@@ -217,6 +221,37 @@ func fetchInstalledPackages() tea.Cmd {
 	}
 }
 
+// fetchInstallationSummary loads the full installation list for the post-command summary.
+func fetchInstallationSummary() tea.Cmd {
+	return func() tea.Msg {
+		st, err := state.Read()
+		if err != nil {
+			return installSummaryMsg{}
+		}
+		return installSummaryMsg{installations: st.Installations}
+	}
+}
+
+// renderInstallSummary formats the installed packages table for the viewport.
+func renderInstallSummary(insts []state.Installation) string {
+	if len(insts) == 0 {
+		return "📦 Nenhum pacote instalado."
+	}
+
+	var sb strings.Builder
+	fmt.Fprintf(&sb, "📦 Pacotes instalados (%d):\n", len(insts))
+
+	for _, inst := range insts {
+		ver := inst.Version
+		if ver == "" {
+			ver = "—"
+		}
+		fmt.Fprintf(&sb, "  ✓ %-20s %s\n", inst.Package, ver)
+	}
+
+	return strings.TrimRight(sb.String(), "\n")
+}
+
 // execCaptured runs a non-interactive cobra command, capturing its output.
 func execCaptured(args []string, baseFactory func() *cobra.Command) tea.Cmd {
 	return func() tea.Msg {
@@ -261,6 +296,13 @@ func (m replModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.installedPackages = msg.packages
 		return m, nil
 
+	case installSummaryMsg:
+		if m.pendingSummary {
+			m.pendingSummary = false
+			m = m.appendToViewport(renderInstallSummary(msg.installations))
+		}
+		return m, nil
+
 	case cmdOutputMsg:
 		output := strings.TrimRight(msg.output, "\n")
 		if output != "" {
@@ -269,13 +311,21 @@ func (m replModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.err != nil {
 			m = m.appendToViewport("erro: " + msg.err.Error())
 		}
-		return m, fetchInstalledPackages()
+		cmds := []tea.Cmd{fetchInstalledPackages()}
+		if m.pendingSummary {
+			cmds = append(cmds, fetchInstallationSummary())
+		}
+		return m, tea.Batch(cmds...)
 
 	case cmdDoneMsg:
 		if msg.err != nil {
 			m = m.appendToViewport("erro: " + msg.err.Error())
 		}
-		return m, fetchInstalledPackages()
+		cmds := []tea.Cmd{fetchInstalledPackages()}
+		if m.pendingSummary {
+			cmds = append(cmds, fetchInstallationSummary())
+		}
+		return m, tea.Batch(cmds...)
 
 	case tea.KeyMsg:
 		return m.handleKey(msg)
@@ -394,6 +444,11 @@ func (m replModel) handleEnter() (tea.Model, tea.Cmd) {
 	}
 
 	m = m.appendToViewport("\n❯ " + line)
+
+	// Mark pending summary for install/uninstall so the result is shown after.
+	if args[0] == "install" || args[0] == "uninstall" {
+		m.pendingSummary = true
+	}
 
 	if args[0] == "uninstall" {
 		return m.handleUninstall(args)
