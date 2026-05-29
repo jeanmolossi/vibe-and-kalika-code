@@ -7,14 +7,16 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/jeanmolossi/vibe-and-kalika-code/internal/app"
+	"github.com/jeanmolossi/vibe-and-kalika-code/internal/state"
 )
 
 func newUninstallCmd() *cobra.Command {
 	var dryRun bool
 	cmd := &cobra.Command{
-		Use:   "uninstall <package>",
-		Short: "Uninstall a previously installed package",
-		Args:  cobra.ExactArgs(1),
+		Use:               "uninstall <package>",
+		Short:             "Uninstall a previously installed package",
+		Args:              cobra.ExactArgs(1),
+		ValidArgsFunction: completeInstalledPackages,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			projectRoot, err := os.Getwd()
 			if err != nil {
@@ -42,4 +44,21 @@ func newUninstallCmd() *cobra.Command {
 	}
 	cmd.Flags().BoolVar(&dryRun, "dry-run", false, "Show what would be uninstalled without applying")
 	return cmd
+}
+
+// completeInstalledPackages provides shell completion with the list of
+// currently installed package names.
+func completeInstalledPackages(_ *cobra.Command, args []string, _ string) ([]string, cobra.ShellCompDirective) {
+	if len(args) > 0 {
+		return nil, cobra.ShellCompDirectiveNoFileComp
+	}
+	store, err := state.Read()
+	if err != nil {
+		return nil, cobra.ShellCompDirectiveError
+	}
+	names := make([]string, 0, len(store.Installations))
+	for _, inst := range store.Installations {
+		names = append(names, inst.Package)
+	}
+	return names, cobra.ShellCompDirectiveNoFileComp
 }
