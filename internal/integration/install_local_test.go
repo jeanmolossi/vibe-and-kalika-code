@@ -10,6 +10,8 @@ import (
 )
 
 func TestInstallLocalPackage(t *testing.T) {
+	stateDir := t.TempDir()
+	t.Setenv("VKC_STATE_DIR", stateDir)
 	projectRoot := t.TempDir()
 	copilotHome := filepath.Join(t.TempDir(), ".copilot")
 	t.Setenv("COPILOT_HOME", copilotHome)
@@ -27,7 +29,7 @@ func TestInstallLocalPackage(t *testing.T) {
 	if _, err := os.Stat(res.ReportPath); err != nil {
 		t.Fatalf("report missing: %v", err)
 	}
-	if _, err := os.Stat(filepath.Join(projectRoot, ".ai-setup", "installed.yaml")); err != nil {
+	if _, err := os.Stat(filepath.Join(stateDir, "installed.yaml")); err != nil {
 		t.Fatalf("state missing: %v", err)
 	}
 }

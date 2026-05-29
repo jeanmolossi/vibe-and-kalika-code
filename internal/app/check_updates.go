@@ -40,7 +40,7 @@ func CheckUpdates(projectRoot string) *UpdateCheck {
 		}
 	}
 
-	st, err := state.Read(projectRoot)
+	st, err := state.Read()
 	if err != nil {
 		return result
 	}

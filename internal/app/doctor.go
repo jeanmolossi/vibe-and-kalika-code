@@ -45,7 +45,7 @@ func isWritable(path string) bool {
 // Doctor runs environment health checks for all supported platforms.
 func Doctor(projectRoot string) DoctorResult {
 	_, gitErr := exec.LookPath("git")
-	_, stateErr := state.Read(projectRoot)
+	_, stateErr := state.Read()
 	detections := Detect(projectRoot)
 
 	platforms := make([]PlatformStatus, 0, len(detections))

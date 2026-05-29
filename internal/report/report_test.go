@@ -12,13 +12,13 @@ import (
 )
 
 func TestReportGeneratedWithCorrectContent(t *testing.T) {
+	t.Setenv("VKC_STATE_DIR", t.TempDir())
 	projectRoot := t.TempDir()
 	path, err := report.WriteInstallReport(report.InstallReportInput{
-		ProjectRoot: projectRoot,
-		Manifest:    &manifest.Manifest{Name: "pack", Version: "1.0.0"},
-		Source:      "./pack",
-		Platforms:   []platform.Platform{platform.PlatformCopilotCLI},
-		Operations:  []platform.PlannedOperation{{Type: platform.OperationCreate, TargetPath: filepath.Join(projectRoot, "file.md")}},
+		Manifest:   &manifest.Manifest{Name: "pack", Version: "1.0.0"},
+		Source:     "./pack",
+		Platforms:  []platform.Platform{platform.PlatformCopilotCLI},
+		Operations: []platform.PlannedOperation{{Type: platform.OperationCreate, TargetPath: filepath.Join(projectRoot, "file.md")}},
 	})
 	if err != nil {
 		t.Fatal(err)

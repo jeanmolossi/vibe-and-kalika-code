@@ -16,8 +16,9 @@ type Result struct {
 	Files []string
 }
 
-func Create(projectRoot string) (*Result, error) {
-	dir := filepath.Join(projectRoot, ".ai-setup", "backups", time.Now().UTC().Format("20060102-150405"))
+// Create creates a new timestamped backup directory under baseDir.
+func Create(baseDir string) (*Result, error) {
+	dir := filepath.Join(baseDir, "backups", time.Now().UTC().Format("20060102-150405"))
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return nil, err
 	}

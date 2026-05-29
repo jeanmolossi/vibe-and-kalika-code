@@ -106,7 +106,7 @@ func TestReadYesNo(t *testing.T) {
 // --- Update (empty state) ----------------------------------------------------
 
 func TestUpdate_EmptyState(t *testing.T) {
-	t.Parallel()
+	t.Setenv("VKC_STATE_DIR", t.TempDir())
 
 	dir := t.TempDir()
 
