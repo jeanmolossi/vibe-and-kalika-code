@@ -155,7 +155,7 @@ Before finishing, verify:
 For non-trivial work, create or update:
 
 ```txt
-~/.copilot/ai-sessions/<repository-last-path-part-not-the-entire-path>/YYYY-MM-DD--HH-mm_<short-task-slug>/
+~/.vkc/sessions/<repository-last-path-part-not-the-entire-path>/YYYY-MM-DD--HH-mm_<short-task-slug>/
 ```
 
 Maintain only relevant artifacts. Do not dump entire files unless required.
@@ -250,7 +250,7 @@ Compression rule:
 The memory file for the current repository lives at:
 
 ```txt
-~/.copilot/memory/<repository-last-path-part>/MEMORY.md
+~/.vkc/memory/<repository-last-path-part>/MEMORY.md
 ```
 
 Use the last path segment of the repository root directory, not the full path. Create the directory if it does not exist.

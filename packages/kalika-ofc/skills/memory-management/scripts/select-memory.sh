@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-FILE="~/.copilot/memory/MEMORY.md"
+FILE="~/.vkc/memory/MEMORY.md"
 QUERY=""
 TAGS=""
 LIMIT=5
@@ -24,7 +24,7 @@ Options:
 
 Example:
   bash ./scripts/select-memory.sh \
-    --file ~/.copilot/memory/MEMORY.md \
+    --file ~/.vkc/memory/MEMORY.md \
     --query "golang mysql database/sql review" \
     --tags "go,mysql,backend,review" \
     --limit 5 \
