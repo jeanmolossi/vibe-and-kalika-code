@@ -459,6 +459,14 @@ func (m replModel) View() string {
 	if m.ready {
 		sb.WriteString(m.vp.View())
 		sb.WriteByte('\n')
+	} else {
+		// Before WindowSizeMsg, fill the viewport region with blank lines so
+		// the input area stays anchored to the bottom of the alt screen.
+		vpH := m.height - headerLines - inputAreaLines
+		if vpH < 0 {
+			vpH = 0
+		}
+		sb.WriteString(strings.Repeat("\n", vpH))
 	}
 
 	if len(m.suggestions) > 0 {
@@ -490,26 +498,22 @@ func (m replModel) View() string {
 }
 
 // renderHeader renders the ASCII art banner and application description.
-// It outputs exactly headerLines (10) lines.
+// It outputs exactly headerLines (10) lines, left-aligned.
 func renderHeader(width int) string {
 	var sb strings.Builder
 
 	logoLines := strings.Split(strings.TrimPrefix(asciiLogo, "\n"), "\n")
 	for _, line := range logoLines {
-		// Trim trailing spaces so lipgloss.PlaceHorizontal measures only printable content.
-		centered := lipgloss.PlaceHorizontal(width, lipgloss.Center, strings.TrimRight(line, " "))
-		sb.WriteString(logoStyle.Render(centered))
+		sb.WriteString(logoStyle.Render(strings.TrimRight(line, " ")))
 		sb.WriteByte('\n')
 	}
 
 	sb.WriteByte('\n')
 
-	title := lipgloss.PlaceHorizontal(width, lipgloss.Center, "Vibe & Kalika Code")
-	sb.WriteString(titleStyle.Render(title))
+	sb.WriteString(titleStyle.Render("Vibe & Kalika Code"))
 	sb.WriteByte('\n')
 
-	subtitle := lipgloss.PlaceHorizontal(width, lipgloss.Center, "Gerenciador de ambientes de desenvolvimento com IA")
-	sb.WriteString(subtitleStyle.Render(subtitle))
+	sb.WriteString(subtitleStyle.Render("Gerenciador de ambientes de desenvolvimento com IA"))
 	sb.WriteByte('\n')
 
 	sb.WriteString(borderLineStyle.Render(strings.Repeat("─", width)))
