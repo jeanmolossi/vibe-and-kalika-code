@@ -822,7 +822,7 @@ Memória não substitui evidência atual.
 Local sugerido:
 
 ```text
-.claude/agent-memory/kalika-judge/
+.ai/agent-memory/kalika-judge/
 ```
 
 Arquivos sugeridos:
