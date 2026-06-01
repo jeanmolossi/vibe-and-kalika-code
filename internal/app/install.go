@@ -104,6 +104,9 @@ func Install(opts InstallOptions) (*InstallResult, int, error) {
 		installRecord.Platforms = append(installRecord.Platforms, string(p))
 	}
 	for _, op := range instResult.Applied {
+		if op.Type == platform.OperationSkip {
+			continue // skipped ops were not installed; don't record them
+		}
 		installRecord.Files = append(installRecord.Files, op.TargetPath)
 		if strings.HasSuffix(op.TargetPath, "AGENTS.md") {
 			installRecord.ManagedMarkers = append(installRecord.ManagedMarkers, op.TargetPath)
