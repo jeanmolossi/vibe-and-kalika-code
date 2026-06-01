@@ -32,11 +32,51 @@ func newInstallCmd() *cobra.Command {
 				}
 				src = sourceInput.Source
 			}
-			res, code, err := app.Install(app.InstallOptions{Source: src, ProjectRoot: projectRoot, Targets: parseTargets(targetsCSV), Yes: yes, DryRun: dryRun, ConflictAction: conflictAction})
+			out := cmd.OutOrStdout()
+			res, code, err := app.Install(app.InstallOptions{
+				Source:         src,
+				ProjectRoot:    projectRoot,
+				Targets:        parseTargets(targetsCSV),
+				Yes:            yes,
+				DryRun:         dryRun,
+				ConflictAction: conflictAction,
+			})
+			if code == app.ExitConflictUnresolved && res != nil {
+				var conflictingPaths []string
+				for _, op := range res.Plan.Operations {
+					if op.Conflict != nil {
+						conflictingPaths = append(conflictingPaths, op.TargetPath)
+					}
+				}
+				fmt.Fprintf(out, "\n  %d conflict(s) detected:\n", len(conflictingPaths))
+				for _, p := range conflictingPaths {
+					fmt.Fprintf(out, "   - %s\n", p)
+				}
+				var chosenAction string
+				if yes {
+					chosenAction = "backup-and-overwrite"
+				} else {
+					var askErr error
+					chosenAction, askErr = ui.AskConflictAction(
+						strings.Join(conflictingPaths, ", "),
+						false,
+					)
+					if askErr != nil {
+						return exitError(app.ExitUserCancelled, askErr)
+					}
+				}
+				res, code, err = app.Install(app.InstallOptions{
+					Source:         src,
+					ProjectRoot:    projectRoot,
+					Targets:        parseTargets(targetsCSV),
+					Yes:            yes,
+					DryRun:         dryRun,
+					ConflictAction: chosenAction,
+				})
+			}
 			if err != nil {
 				return exitError(code, err)
 			}
-			out := cmd.OutOrStdout()
 			fmt.Fprintf(out, "✓ Installed %s %s\n", res.Manifest.Name, res.Manifest.Version)
 			printInstallSummary(out, res)
 			return nil
@@ -45,7 +85,7 @@ func newInstallCmd() *cobra.Command {
 	cmd.Flags().BoolVar(&yes, "yes", false, "Skip prompts")
 	cmd.Flags().BoolVar(&dryRun, "dry-run", false, "Show plan without applying")
 	cmd.Flags().StringVar(&targetsCSV, "targets", "", "Comma-separated targets")
-	cmd.Flags().StringVar(&conflictAction, "conflict-action", "skip", "skip|overwrite|backup-and-overwrite")
+	cmd.Flags().StringVar(&conflictAction, "conflict-action", "", "skip|overwrite|backup-and-overwrite")
 	return cmd
 }
 
