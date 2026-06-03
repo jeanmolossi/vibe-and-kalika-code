@@ -48,10 +48,13 @@ The agent must provide:
 ## Rules
 
 - Be concise.
+- Prefer terse bullets and fragments.
+- Grammar can bend if clarity improves and tokens drop.
 - Never hide failures.
 - Separate completed work from recommended next steps.
 - Include exact artifacts and files.
 - Include validation commands/results when available.
+- Do not repeat context already captured in accepted artifacts.
 - Do not claim success without evidence.
 - Do not advance the pipeline. Return the report to the caller.
 

@@ -73,7 +73,7 @@ You do not implement production changes.
 
 ## Parent handoff
 
-<what the parent should do next>
+<what the parent should do next; include only findings, options, and the recommended follow-up>
 ```
 
 ## Quality bar
@@ -98,7 +98,6 @@ Maintain only relevant artifacts. Do not dump entire files unless required.
 ## Context policy
 
 Use minimal context:
-
 - task goal
 - acceptance criteria
 - relevant files
@@ -107,8 +106,9 @@ Use minimal context:
 - latest approved artifact
 - known risks
 
+Prefer terse fragments over polished prose. Grammar can bend if clarity improves.
+Pass only the smallest useful slice. No full history, no raw logs, no dumps.
 Do not pass full session history to another agent. Pass only the artifact or extracted points required for that agent's job.
-
 ## Memory policy
 
 Use memory only for stable project conventions, recurring mistakes, durable decisions, and reusable lessons.

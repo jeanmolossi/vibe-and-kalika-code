@@ -109,7 +109,7 @@ APPROVED | REJECTED | BLOCKED
 
 ## Caller handoff
 
-<what implementer or parent must do>
+<what implementer or parent must do; keep it to blockers, fixes, and evidence>
 ```
 
 ## Quality bar
@@ -144,6 +144,8 @@ Use minimal context:
 - latest approved artifact
 - known risks
 
+Prefer terse fragments over polished prose. Grammar can bend if clarity improves.
+Pass only the smallest useful slice. No full history, no raw logs, no dumps.
 Do not pass full session history to another agent. Pass only the artifact or extracted points required for that agent's job.
 
 ## Memory policy

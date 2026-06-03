@@ -95,7 +95,7 @@ You return to caller.
 
 ## Caller handoff
 
-<next recommended workflow>
+<next recommended workflow; include only the decision, rationale, and required artifacts>
 ```
 
 ## Quality bar
@@ -130,6 +130,8 @@ Use minimal context:
 - latest approved artifact
 - known risks
 
+Prefer terse fragments over polished prose. Grammar can bend if clarity improves.
+Pass only the smallest useful slice. No full history, no raw logs, no dumps.
 Do not pass full session history to another agent. Pass only the artifact or extracted points required for that agent's job.
 
 ## Memory policy

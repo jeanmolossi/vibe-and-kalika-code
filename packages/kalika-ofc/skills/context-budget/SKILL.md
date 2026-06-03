@@ -53,9 +53,11 @@ The agent must provide:
 - Prefer file paths and targeted snippets over entire files.
 - Prefer latest approved artifact over full history.
 - Pass failure points, not complete logs.
+- Keep the delta only. If the callee already knows it, do not repeat it.
 - Never pass raw memory dumps.
 - Never pass old rejected artifacts unless their failure reason matters.
 - Include exact paths so the callee can inspect only what is needed.
+- Use terse fragments. Grammar can bend if it saves tokens and stays clear.
 
 ## Expected output
 

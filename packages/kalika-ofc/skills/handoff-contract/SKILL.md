@@ -95,10 +95,12 @@ Return to caller only. Do not call another agent. Do not advance the pipeline.
 5. Define acceptance criteria.
 6. Add return rule.
 7. If the handoff is still broad, split it or route back to planning.
+8. Prefer terse, LLM-friendly bullets. Grammar can bend if clarity improves and the meaning stays unambiguous.
+9. Pass only the delta the callee needs; do not restate history or duplicate artifacts.
 
 ## Expected output
 
-Return a completed `# Handoff Contract` only. Do not include implementation, research, review, or validation content inside the contract.
+Return a completed `# Handoff Contract` only. Keep it compact, LLM-friendly, and low-token. Do not include implementation, research, review, or validation content inside the contract.
 
 ## Stop conditions
 

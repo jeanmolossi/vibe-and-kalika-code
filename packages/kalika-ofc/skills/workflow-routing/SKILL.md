@@ -60,14 +60,15 @@ The agent must provide:
 1. If the user asks for "full work", "complete workflow", "do everything", "from start to finish", or an explicit chain of workflows, route to `workflow-full`.
 2. If a patch exists and the user asks to review or validate work already done, route to `workflow-review`.
 3. If the user asks to update or create documentation, route to `workflow-documentation`.
-4. If the user asks to extract learning, create skills, or preserve reusable knowledge, route to `workflow-learning`.
-5. If the task has no approved plan, do not route directly to development unless `workflow-full` is selected.
-6. If the task asks for options or trade-offs, route to refinement.
-7. If the task asks to investigate without implementation, route to spike.
-8. If the task asks how to test, verify, validate, or prove correctness, route to validation.
-9. If the task includes an approved plan and a validation strategy, route to development.
-10. If required inputs are missing, prefer refinement and report the missing inputs.
-11. Select exactly one primary workflow. Secondary workflows may be listed as possible next steps only.
+4. Prefer the smallest next workflow that can safely move the task forward. Do not hand off more context than the next agent needs.
+5. If the user asks to extract learning, create skills, or preserve reusable knowledge, route to `workflow-learning`.
+6. If the task has no approved plan, do not route directly to development unless `workflow-full` is selected.
+7. If the task asks for options or trade-offs, route to refinement.
+8. If the task asks to investigate without implementation, route to spike.
+9. If the task asks how to test, verify, validate, or prove correctness, route to validation.
+10. If the task includes an approved plan and a validation strategy, route to development.
+11. If required inputs are missing, prefer refinement and report the missing inputs.
+12. Select exactly one primary workflow. Secondary workflows may be listed as possible next steps only.
 
 ## Expected output
 
